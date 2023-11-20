@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "portal-gcsp-client-side-solution",
+    "id": "402a7bf0-3d1b-4a66-9d47-4a38b4d4ac60",
+    "version": "1.1.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.17.4"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "Gestion del Conocimiento"
+      },
+      "longDescription": {
+        "default": "Gestion del Conocimiento"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "portal-gcsp Feature",
+        "description": "The feature that activates elements of the portal-gcsp solution.",
+        "id": "406b678d-98be-479f-9743-8daf026e5c2e",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/portal-gcsp.sppkg"
+  }
+}
