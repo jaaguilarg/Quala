@@ -36,7 +36,7 @@
     "redux": "^4.2.1",
     "redux-thunk": "^2.4.2",
     "sp-pnp-js": "^3.0.10",
-    "tslib": "2.3.1",
+    "tslib": "2.6.2",
     "underscore": "^1.13.6"
   },
   "devDependencies": {
