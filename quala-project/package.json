@@ -23,7 +23,7 @@
     "@pnp/logging": "^3.17.0",
     "@pnp/queryable": "^3.17.0",
     "@pnp/sp": "^3.17.0",
-    "@pnp/spfx-controls-react": "^3.15.0",
+    "@pnp/spfx-controls-react": "^3.16.0",
     "@types/react-redux": "^7.1.28",
     "bootstrap": "^5.3.2",
     "office-ui-fabric-react": "^7.199.1",
