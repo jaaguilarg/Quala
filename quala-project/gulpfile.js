@@ -45,4 +45,7 @@ build.task('update-appSettings', {
   }
 });
 
+build.addSuppression(/Warning/gi);
+
+
 build.initialize(require('gulp'));

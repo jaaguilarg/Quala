@@ -7,6 +7,7 @@ import 'react-quill/dist/quill.snow.css';
 import Componentes from '../Formulario/Componentes';
 import { IoIosArrowForward } from "react-icons/io/";
 import { GrClose } from "react-icons/Gr/";
+// import { connect } from 'react-redux';
 
 
 export interface IAprobacionesProps {
@@ -14,6 +15,7 @@ export interface IAprobacionesProps {
    context: any;
    Subsitio: any;
    NombreSubsitio: any;
+   Webpartcontext: any;
    match: any;
    urlSitioPrincipal: any;
    currentUser: any;
@@ -28,6 +30,8 @@ export interface IAprobacionesProps {
    mostrarModal: any;
    NombreMecanismo: any;
    Sigla: string;
+   accion: any;
+
 }
 
 class Aprobaciones extends React.Component<IAprobacionesProps, any>{
@@ -41,15 +45,14 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
    constructor(props: any) {
       super(props)
 
-      this.pnp = new PNP(this.props.context);
-
+      this.pnp = new PNP(this.props.Webpartcontext);
 
       var pasos: any = [
-         //{Title: 'Modulo de aprobaciones'},
-         //{Title: 'Documentos del Mecanismo'},
-         //{Title: 'Aprobadores'},
-         //{Title: 'Control de Cambios'},
-         //{Title:'Plan de acción de los contenidos'}
+         // {Title: 'Modulo de aprobaciones'},
+         // {Title: 'Documentos del Mecanismo'},
+         // {Title: 'Aprobadores'},
+         // {Title: 'Control de Cambios'},
+         // {Title:'Plan de acción de los contenidos'}
       ]
 
       this.state = {
@@ -126,6 +129,8 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
          PersonasAprobadoras: [],
          disabledGerente: false,
          FaqSeguridad: "",
+         TituloGestionar:"",
+         TituloRevision:"",
          FaqPlantaProduccion: "",
          faqCronograma: "",
          loading: false,
@@ -164,7 +169,7 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
       this.closeModal = this.closeModal.bind(this)
       this.openModalExitoso = this.openModalExitoso.bind(this)
       this.cambioEstadoAprobacion = this.cambioEstadoAprobacion.bind(this)
-      console.log(this.props);
+          
    }
 
 
@@ -175,13 +180,43 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
          EstadoAprobacion: estado
       }
       this.pnp.updateByIdRoot(
-         "Aprobadores",
+         "Control Solicitudes",
          Id,
          obj
       ).then((items: any) => {
          this.mensajesModal(estado, IdSolicitud, NombreMecanismo)
       })
    }
+
+   // public consultaRoles(){
+    
+   //    var paises = this.state.paises.filter(
+   //      (x: { Sigla: any }) => x.Sigla == this.state.descripcionSitio.sitio 
+   //    );
+  
+  
+   //    this.setState({
+   //      NombrePais:paises[0].Nombre_x0020_Pais
+   //    })
+  
+  
+   //    var btnMecanismo=this.state.parametros.filter((x:{Llave:any})=>x.Llave == "BotonMapadeMecanismos")
+  
+   //      this.state.usuario.paises.forEach((element:any)=>{
+  
+   //        if(element == paises[0].ID && this.state.usuario.gestor){
+   //          this.setState({
+  
+   //            gestores: 1,
+   //            BtnMapaMecanismo:btnMecanismo[0].Valor
+  
+   //          })
+            
+   //        }
+  
+   //      })
+  
+   //  }
 
    // Funcion para cerrar Modal
    closeModal() {
@@ -343,7 +378,7 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
    }
    // Funcion que consulta mensaje a mostrar 
    private consultarMensajeFinal() {
-      this.pnp.getListItems(
+      this.pnp.getListItemsRoot(
          "Parametros Tecnicos",
          ["*"],
          "",
@@ -586,8 +621,21 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
       this.setState({
          estadoModal: true
       })
-
+      this.ConsultarLlavesTitulos()
+      this.ConsultarTituloRevision()
+      this.ConsultarTituloPublicacion()
+      this.ConsultarTituloAprobacion()
       this.consultarAprobadoresArea()
+      this.ConsultarBotonVerMas()
+      this.ConsultarBotonVerDocumentos()
+      this.ConsultarBotonResponderAjustes()
+      this.ConsultarBotonEnviarAPublicacion()
+      this.ConsultarBotonCancelarsolicitud()
+      this.ConsultarBotonAsignarMetadata()
+      this.ConsultarBotonActivarAprobación()
+      this.ConsultarBotonEnviarAjustes()
+      this.ConsultarBotonAprobar()
+      this.ConsultarBotonRechazar()
       this.pnp.getCurrentUser().then(user => {
          this.setState({
             UserId: user.Id,
@@ -598,8 +646,7 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
          this.consultarRevisor(user.Id);
          this.consultarDatosAprobacion(user.Id)
 
-      });
-
+      });      
       this.consultarMensajeFinal()
       this.consultaMecanismoLocal()
       this.ConsultarFaq()
@@ -678,6 +725,7 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
          } else {
          }
       })
+      
    }
    
    // Funcion para consultar las solicitudes que estan en estado "En Revision"
@@ -721,6 +769,7 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
             
          }
       })
+      
    }
    
    // Funcion para consultar las solicitudes que estan en estado "En Aprobacion"
@@ -771,9 +820,9 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
    // Funcion para la contruccion de los mensajes modal
    public mensajesModal(Estado: string, IdSolicitud: any, NombreMecanismo: any) {
       this.pnp.getListItemsRoot(
-         "MensajesModal",
+         "Parametros Tecnicos",
          ["*"],
-         "Estado eq '" + Estado + "'",
+         "Llave eq '" + Estado + "'",
          ""
       ).then((items: any) => {
          var msjModal = items[0].Title.replace('#', IdSolicitud)
@@ -787,12 +836,363 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
          }, () => {
             this.setState({ mostrarModalExitoso: true })
          })
-
-
-
       })
    }
+
+   // Funcion para consultar llaves en los parametros tecnicos
+   private ConsultarLlavesTitulos() {
+
+      
+         this.pnp.getListItemsRoot(
+            "Parametros Tecnicos",
+            ["*"],
+            "Llave eq 'TituloModuloSolicitudes'",
+            ""
+          ).then((items) => {
+             
+             
+            if (items.length > 0) {
+              // Actualiza el estado con el valor obtenido
+              this.setState({ TituloGestionar: items[0].Valor });
+            } else {
+              console.log("No se encontró la llave buscada.");
+              this.setState({ TituloGestionar: '' }); // O puedes establecer un valor por defecto
+            }
+          }).catch((error) => {
+            console.error("Error al consultar la lista:", error);
+            this.setState({ TituloGestionar: '' }); // Manejo del estado en caso de error
+           });      
+           
+    }
+
+    private ConsultarTituloRevision(){
+
+      this.pnp.getListItemsRoot(
+         "Parametros Tecnicos",
+         ["*"],
+         "Llave eq 'TituloMenuRevision'",
+         ""
+       ).then((items) => {
+          
+          
+         if (items.length > 0) {
+           // Actualiza el estado con el valor obtenido
+           this.setState({ TituloRevision: items[0].Valor });
+         } else {
+           console.log("No se encontró la llave buscada.");
+           this.setState({ TituloRevision: '' }); // O puedes establecer un valor por defecto
+         }
+       }).catch((error) => {
+         console.error("Error al consultar la lista:", error);
+         this.setState({ TituloRevision: '' }); // Manejo del estado en caso de error
+        });      
+      
+    }
+
+    private ConsultarTituloPublicacion(){
+
+      this.pnp.getListItemsRoot(
+         "Parametros Tecnicos",
+         ["*"],
+         "Llave eq 'TituloMenuPublicacion'",
+         ""
+       ).then((items) => {
+          
+          
+         if (items.length > 0) {
+           // Actualiza el estado con el valor obtenido
+           this.setState({ TituloPublicacion: items[0].Valor });
+         } else {
+           console.log("No se encontró la llave buscada.");
+           this.setState({ TituloPublicacion: '' }); // O puedes establecer un valor por defecto
+         }
+       }).catch((error) => {
+         console.error("Error al consultar la lista:", error);
+         this.setState({ TituloPublicacion: '' }); // Manejo del estado en caso de error
+        });      
+      
+    } 
+
+    private ConsultarTituloAprobacion(){
+
+      this.pnp.getListItemsRoot(
+         "Parametros Tecnicos",
+         ["*"],
+         "Llave eq 'TituloMenuAprobacion'",
+         ""
+       ).then((items) => {
+          
+          
+         if (items.length > 0) {
+           // Actualiza el estado con el valor obtenido
+           this.setState({ TituloAprobacion: items[0].Valor });
+         } else {
+           console.log("No se encontró la llave buscada.");
+           this.setState({ TituloAprobacion: '' }); // O puedes establecer un valor por defecto
+         }
+       }).catch((error) => {
+         console.error("Error al consultar la lista:", error);
+         this.setState({ TituloAprobacion: '' }); // Manejo del estado en caso de error
+        });      
+      
+    } 
+
+    
+   // Funcion para consultar el titulo "ver más" en parametros tecnicos
+    private ConsultarBotonVerMas(){
+
+      this.pnp.getListItemsRoot(
+         "Parametros Tecnicos",
+         ["*"],
+         "Llave eq 'BotonVerMas'",
+         ""
+       ).then((items) => {
+         console.log(items);
+         
+          
+         if (items.length > 0) {
+           // Actualiza el estado con el valor obtenido
+           this.setState({ BotonVerMas: items[0].Valor });
+         } else {
+           console.log("No se encontró la llave buscada.");
+           this.setState({ BotonVerMas: '' }); // O puedes establecer un valor por defecto
+         }
+       }).catch((error) => {
+         console.error("Error al consultar la lista:", error);
+         this.setState({ BotonVerMas: '' }); // Manejo del estado en caso de error
+        });      
+      
+    } 
+
+   // Funcion para consultar el titulo "ver documentos" en parametros tecnicos
+   private ConsultarBotonVerDocumentos(){
+
+   this.pnp.getListItemsRoot(
+      "Parametros Tecnicos",
+      ["*"],
+      "Llave eq 'BotonVerDocumentos'",
+      ""
+      ).then((items) => {
+         
+         
+      if (items.length > 0) {
+         // Actualiza el estado con el valor obtenido
+         this.setState({ BotonVerDocumentos: items[0].Valor });
+      } else {
+         console.log("No se encontró la llave buscada.");
+         this.setState({ BotonVerDocumentos: '' }); // O puedes establecer un valor por defecto
+      }
+      }).catch((error) => {
+      console.error("Error al consultar la lista:", error);
+      this.setState({ BotonVerDocumentos: '' }); // Manejo del estado en caso de error
+      });      
    
+   } 
+
+   // Funcion para consultar el titulo "Boton Responder Ajustes" en parametros tecnicos
+   private ConsultarBotonResponderAjustes(){
+
+   this.pnp.getListItemsRoot(
+      "Parametros Tecnicos",
+      ["*"],
+      "Llave eq 'BotonResponderAjustes'",
+      ""
+      ).then((items) => {
+         
+         
+      if (items.length > 0) {
+         // Actualiza el estado con el valor obtenido
+         this.setState({ BotonResponderAjustes: items[0].Valor });
+      } else {
+         console.log("No se encontró la llave buscada.");
+         this.setState({ BotonResponderAjustes: '' }); // O puedes establecer un valor por defecto
+      }
+      }).catch((error) => {
+      console.error("Error al consultar la lista:", error);
+      this.setState({ BotonResponderAjustes: '' }); // Manejo del estado en caso de error
+      });      
+   
+   }
+
+   // Funcion para consultar el titulo "Boton Enviar Ajustes" en parametros tecnicos
+   private ConsultarBotonEnviarAjustes(){
+
+      this.pnp.getListItemsRoot(
+         "Parametros Tecnicos",
+         ["*"],
+         "Llave eq 'BotonEnviarAjustes'",
+         ""
+         ).then((items) => {
+            
+            
+         if (items.length > 0) {
+            // Actualiza el estado con el valor obtenido
+            this.setState({ BotonEnviarAjustes: items[0].Valor });
+         } else {
+            console.log("No se encontró la llave buscada.");
+            this.setState({ BotonEnviarAjustes: '' }); // O puedes establecer un valor por defecto
+         }
+         }).catch((error) => {
+         console.error("Error al consultar la lista:", error);
+         this.setState({ BotonEnviarAjustes: '' }); // Manejo del estado en caso de error
+         });      
+      
+      }  
+      
+   // Funcion para consultar el titulo "Boton Enviar a publicacion" en parametros tecnicos
+   private ConsultarBotonEnviarAPublicacion(){
+
+      this.pnp.getListItemsRoot(
+         "Parametros Tecnicos",
+         ["*"],
+         "Llave eq 'BotonEnviarAPublicacion'",
+         ""
+         ).then((items) => {
+            
+            
+         if (items.length > 0) {
+            // Actualiza el estado con el valor obtenido
+            this.setState({ BotonEnviarAPublicacion: items[0].Valor });
+         } else {
+            console.log("No se encontró la llave buscada.");
+            this.setState({ BotonEnviarAPublicacion: '' }); // O puedes establecer un valor por defecto
+         }
+         }).catch((error) => {
+         console.error("Error al consultar la lista:", error);
+         this.setState({ BotonEnviarAPublicacion: '' }); // Manejo del estado en caso de error
+         });      
+      
+   }
+
+   // Funcion para consultar el titulo "Boton cancelar solicitud" en parametros tecnicos
+   private ConsultarBotonCancelarsolicitud(){
+
+      this.pnp.getListItemsRoot(
+         "Parametros Tecnicos",
+         ["*"],
+         "Llave eq 'BotonCancelarsolicitud'",
+         ""
+      ).then((items) => {
+         console.log(items);
+         
+         
+         if (items.length > 0) {
+            // Actualiza el estado con el valor obtenido
+            this.setState({ BotonCancelarsolicitud: items[0].Valor });
+         } else {
+            console.log("No se encontró la llave buscada.");
+            this.setState({ BotonCancelarsolicitud: '' }); // O puedes establecer un valor por defecto
+         }
+      }).catch((error) => {
+         console.error("Error al consultar la lista:", error);
+         this.setState({ BotonCancelarsolicitud: '' }); // Manejo del estado en caso de error
+      });      
+      
+   }
+   
+   // Funcion para consultar el titulo "Boton asignar metadata" en parametros tecnicos
+   private ConsultarBotonAsignarMetadata(){
+
+      this.pnp.getListItemsRoot(
+         "Parametros Tecnicos",
+         ["*"],
+         "Llave eq 'BotonAsignarMetadata'",
+         ""
+      ).then((items) => {
+         console.log(items);
+         
+         
+         if (items.length > 0) {
+            // Actualiza el estado con el valor obtenido
+            this.setState({ BotonAsignarMetadata: items[0].Valor });
+         } else {
+            console.log("No se encontró la llave buscada.");
+            this.setState({ BotonAsignarMetadata: '' }); // O puedes establecer un valor por defecto
+         }
+      }).catch((error) => {
+         console.error("Error al consultar la lista:", error);
+         this.setState({ BotonAsignarMetadata: '' }); // Manejo del estado en caso de error
+      });      
+      
+   }
+   
+   // Funcion para consultar el titulo "Boton activar aprobacion" en parametros tecnicos
+   private ConsultarBotonActivarAprobación(){
+
+      this.pnp.getListItemsRoot(
+         "Parametros Tecnicos",
+         ["*"],
+         "Llave eq 'BotonActivarAprobación'",
+         ""
+      ).then((items) => {
+         console.log(items);
+         
+         
+         if (items.length > 0) {
+            // Actualiza el estado con el valor obtenido
+            this.setState({ BotonActivarAprobación: items[0].Valor });
+         } else {
+            console.log("No se encontró la llave buscada.");
+            this.setState({ BotonActivarAprobación: '' }); // O puedes establecer un valor por defecto
+         }
+      }).catch((error) => {
+         console.error("Error al consultar la lista:", error);
+         this.setState({ BotonActivarAprobación: '' }); // Manejo del estado en caso de error
+      });      
+      
+   }
+   
+   // Funcion para consultar el titulo "Boton Aprobar" en parametros tecnicos
+   private ConsultarBotonAprobar(){
+
+      this.pnp.getListItemsRoot(
+         "Parametros Tecnicos",
+         ["*"],
+         "Llave eq 'BotonAprobar'",
+         ""
+      ).then((items) => {
+         console.log(items);
+         
+         
+         if (items.length > 0) {
+            // Actualiza el estado con el valor obtenido
+            this.setState({ BotonAprobar: items[0].Valor });
+         } else {
+            console.log("No se encontró la llave buscada.");
+            this.setState({ BotonAprobar: '' }); // O puedes establecer un valor por defecto
+         }
+      }).catch((error) => {
+         console.error("Error al consultar la lista:", error);
+         this.setState({ BotonAprobar: '' }); // Manejo del estado en caso de error
+      });      
+      
+   }
+         
+   // Funcion para consultar el titulo "Boton Aprobar" en parametros tecnicos
+   private ConsultarBotonRechazar(){
+
+      this.pnp.getListItemsRoot(
+         "Parametros Tecnicos",
+         ["*"],
+         "Llave eq 'BotonRechazar'",
+         ""
+      ).then((items) => {
+         console.log(items);
+         
+         
+         if (items.length > 0) {
+            // Actualiza el estado con el valor obtenido
+            this.setState({ BotonRechazar: items[0].Valor });
+         } else {
+            console.log("No se encontró la llave buscada.");
+            this.setState({ BotonRechazar: '' }); // O puedes establecer un valor por defecto
+         }
+      }).catch((error) => {
+         console.error("Error al consultar la lista:", error);
+         this.setState({ BotonRechazar: '' }); // Manejo del estado en caso de error
+      });      
+      
+   }
    // Funcion para guardar la aprobacion o rechazo
    private sortByColumn(columnName: any) {
       let sortedData = this.state.dataAprobacion.sort((a: any, b: any) => {
@@ -818,8 +1218,9 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
                <div className="toolbar py-5 py-lg-7" id="kt_toolbar">
                   <div id="kt_toolbar_container" className="container-xxl d-flex flex-stack flex-wrap">
                      <div className="page-titlo d-flex flex-column me-3">
-                        <h1 id='contentn' className="solicitudestitle d-flex">
-                           Solicitudes por gestionar {(this.state.dataAprobacion + this.state.dataAjustes + this.state.dataRevision + this.state.dataPublicacion)<1? <h1>(0)</h1>: <h1>({this.state.dataAprobacion.length + this.state.dataAjustes.length + this.state.dataRevision.length + this.state.dataPublicacion.length })</h1> }
+                        <h1 id='contentn' className="solicitudestitle d-flex">                        
+                        {this.state.TituloGestionar}
+                        {(this.state.dataAprobacion + this.state.dataAjustes + this.state.dataRevision + this.state.dataPublicacion)<1? <h1>(0)</h1>: <h1>({this.state.dataAprobacion.length + this.state.dataAjustes.length + this.state.dataRevision.length + this.state.dataPublicacion.length })</h1> }
                         </h1>
                      </div>
                   </div>
@@ -856,7 +1257,9 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
                                              })
                                           }
                                        }>
-                                       <IoIosArrowForward className={this.state.IsTotal ? "arrowExpanded" : "arrowCollapsed"} style={{ marginRight: 5 }} /> En revision ({this.state.dataAprobacion.length + this.state.dataRevision.length})
+                                       <IoIosArrowForward className={this.state.IsTotal ? "arrowExpanded" : "arrowCollapsed"} style={{ marginRight: 5 }} />
+                                          {this.state.TituloRevision}                                   
+                                          ({this.state.dataAprobacion.length + this.state.dataRevision.length})
                                     </button>
 
                                     {/* En revisión */}
@@ -932,9 +1335,9 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
                                                             <path d="M135 995 c-17 -16 -25 -35 -25 -57 0 -30 37 -70 423 -455 394 -395 425 -423 457 -423 32 0 63 28 457 423 386 385 423 425 423 455 0 44 -38 82 -82 82 -29 0 -68 -35 -415 -382 l-383 -383 -383 383 c-347 347 -386 382 -415 382 -22 0 -41 -9 -57 -25z" />
                                                          </g>
                                                       </svg></button></th>
-                                                      <th><b>Ver más</b></th>
-                                                      <th><b>Ver documentos</b></th>
-                                                      <th><b>Responder ajustes</b></th>
+                                                      <th>{this.state.BotonVerMas}</th>
+                                                      <th>{this.state.BotonVerDocumentos}</th>
+                                                      <th><b>{this.state.BotonResponderAjustes}</b></th>
                                                    </tr>
                                                 </thead>
 
@@ -1058,11 +1461,11 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
                                                          <path d="M135 995 c-17 -16 -25 -35 -25 -57 0 -30 37 -70 423 -455 394 -395 425 -423 457 -423 32 0 63 28 457 423 386 385 423 425 423 455 0 44 -38 82 -82 82 -29 0 -68 -35 -415 -382 l-383 -383 -383 383 c-347 347 -386 382 -415 382 -22 0 -41 -9 -57 -25z" />
                                                       </g>
                                                    </svg></button></th>
-                                                   <th><b>Ver más</b></th>
-                                                   <th><b>Ver documentos</b></th>
-                                                   <th><b>Enviar ajustes</b></th>
-                                                   <th><b>Enviar a publicacion</b></th>
-                                                   <th><b>Cancelar solicitud</b></th>
+                                                   <th>{this.state.BotonVerMas}</th>
+                                                   <th>{this.state.BotonVerDocumentos}</th>
+                                                   <th>{this.state.BotonEnviarAjustes}</th>
+                                                   <th>{this.state.BotonEnviarAPublicacion}</th>
+                                                   <th>{this.state.BotonCancelarsolicitud}</th>
                                                 </tr>
                                              </thead>
                                              {this.state.dataRevision && this.state.dataRevision.map((e: any) => {
@@ -1084,7 +1487,7 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
                                                       <td>{e.Proceso}</td>
                                                       <td>
                                                          {/* boton ver màs */}
-                                                         <button className='btn-crear' onClick={() => { this.setState({ IdMecanismoModal: e.ID, boton: "vermas" }, () => { this.setState({ mostrarModal: true, Editar: false, boton: "vermas" }) }) }}>
+                                                         <button className='btn-crear' onClick={() => { this.setState({ IdMecanismoModal: e.ID, boton: "vermas" }, () => { this.setState({ mostrarModal: true, Editar: false, boton: "vermas", accion:"vermas"}) }) }}>
                                                             <svg xmlns="http://www.w3.org/2000/svg" fill="#000000" width="25" height="25" viewBox="0 0 32 32">
                                                                <path d="M9,17h6v6a1,1,0,0,0,2,0V17h6a1,1,0,0,0,0-2H17V9a1,1,0,0,0-2,0v6H9a1,1,0,0,0,0,2Z" />
                                                             </svg>
@@ -1160,7 +1563,9 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
                                           }
 
                                        }>
-                                       <IoIosArrowForward className={this.state.Ispublicado ? "arrowExpanded" : "arrowCollapsed"} />En publicación ({this.state.dataPublicacion.length})
+                                       <IoIosArrowForward className={this.state.Ispublicado ? "arrowExpanded" : "arrowCollapsed"} />
+                                          {this.state.TituloPublicacion}  
+                                          ({this.state.dataPublicacion.length})
                                     </button>
 
                                     {/* En publicación */}
@@ -1234,11 +1639,11 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
                                                          <path d="M135 995 c-17 -16 -25 -35 -25 -57 0 -30 37 -70 423 -455 394 -395 425 -423 457 -423 32 0 63 28 457 423 386 385 423 425 423 455 0 44 -38 82 -82 82 -29 0 -68 -35 -415 -382 l-383 -383 -383 383 c-347 347 -386 382 -415 382 -22 0 -41 -9 -57 -25z" />
                                                       </g>
                                                    </svg></button></th>
-                                                   <th><b>Ver más</b></th>
-                                                   <th><b>Ver documentos</b></th>
-                                                   <th><b>Asignar metadata</b></th>
-                                                   <th><b>Activar flujo de aprobación</b></th>
-                                                   <th><b>Cancelar solicitud</b></th>
+                                                   <th>{this.state.BotonVerMas}</th>
+                                                   <th>{this.state.BotonVerDocumentos}</th>
+                                                   <th>{this.state.BotonAsignarMetadata}</th>
+                                                   <th>{this.state.BotonActivarAprobación}</th>
+                                                   <th>{this.state.BotonCancelarsolicitud}</th>
                                                 </tr>
                                              </thead>
                                              {this.state.dataPublicacion && this.state.dataPublicacion.map((e: any) => {
@@ -1339,7 +1744,9 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
                                              })
                                           }
                                        }>
-                                       <IoIosArrowForward className={this.state.IsAprobaciones ? "arrowExpanded" : "arrowCollapsed"} />En aprobación ({this.state.dataAprobacion && this.state.dataAprobacion.length})
+                                       <IoIosArrowForward className={this.state.IsAprobaciones ? "arrowExpanded" : "arrowCollapsed"} />
+                                       {this.state.TituloAprobacion}
+                                       ({this.state.dataAprobacion && this.state.dataAprobacion.length})
                                     </button>
 
                                     {/* En aprobación */}
@@ -1399,10 +1806,10 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
                                                       </g>
                                                    </svg></button></th>
                                                    <th><b>Proceso</b></th>
-                                                   <th><b>Ver más</b></th>
-                                                   <th><b>Ver documentos</b></th>
-                                                   <th><b>Aprobar</b></th>
-                                                   <th><b>Rechazar</b></th>
+                                                   <th>{this.state.BotonVerMas}</th>
+                                                   <th>{this.state.BotonVerDocumentos}</th>
+                                                   <th>{this.state.BotonAprobar}</th>
+                                                   <th>{this.state.BotonRechazar}</th>
                                                 </tr>
                                              </thead>
                                              {
@@ -1425,7 +1832,7 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
                                                          <td>{e.Planta == null ? <p>No</p> : <p>Si</p>}</td>
                                                       
                                                          <td>
-                                                            <button title='.' className='btn-crear' onClick={() => { this.setState({ IdMecanismoModal: e.IdSolicitud.ID, Componentes: true, boton: "vermas"}, () => { this.setState({ mostrarModal: true, Editar: true }, () => { this.setState({ boton: "vermas" }) }) }) }}>
+                                                         <button className='btn-crear' onClick={() => {this.setState({ IdMecanismoModal: e.ID, boton: "" }, () => { this.setState({ mostrarModal: true, Editar: true, boton: "vermas" }) }) }}>
                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="#000000" width="25" height="25" viewBox="0 0 32 32">
                                                                   <path d="M9,17h6v6a1,1,0,0,0,2,0V17h6a1,1,0,0,0,0-2H17V9a1,1,0,0,0-2,0v6H9a1,1,0,0,0,0,2Z" />
                                                                </svg>
@@ -1441,9 +1848,8 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
                                                          <td>
                                                             <button title='.' className='btn-publicacion' /*onClick={() => { this.cambioEstadoAprobacion("Aprobado", e.ID, e.IdSolicitud.ID, e.IdSolicitud.NombreMecanismo) }}*/
                                                             onClick={() => { this.setState({ IdListaAprobadores: e.ID, IdMecanismoModal: e.IdSolicitud.ID, estado: "Aprobado", NombreMecanismo: e.IdSolicitud.NombreMecanismo }, () => { this.setState({ mostrarModal: true, boton: "Aprobar" }) }) }}>
-                                                               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-person-check-fill" viewBox="0 0 16 16">
-                                                                  <path fill-rule="evenodd" d="M15.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 0 1 .708-.708L12.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0z" />
-                                                                  <path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+                                                               <svg width="23" height="23" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                  <path d="M24 4C35.0457 4 44 12.9543 44 24C44 35.0457 35.0457 44 24 44C12.9543 44 4 35.0457 4 24C4 12.9543 12.9543 4 24 4ZM32.6339 17.6161C32.1783 17.1605 31.4585 17.1301 30.9676 17.525L30.8661 17.6161L20.75 27.7322L17.1339 24.1161C16.6457 23.628 15.8543 23.628 15.3661 24.1161C14.9105 24.5717 14.8801 25.2915 15.275 25.7824L15.3661 25.8839L19.8661 30.3839C20.3217 30.8395 21.0416 30.8699 21.5324 30.475L21.6339 30.3839L32.6339 19.3839C33.122 18.8957 33.122 18.1043 32.6339 17.6161Z" fill="#00AE5A"/>
                                                                </svg>
                                                             </button>
                                                          </td>
@@ -1501,18 +1907,20 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
                                     </div>
                                  </div>
                                  :
-                                 <div>
-                                    <span className='CerrarModalsintitulo'
-                                       onClick={() => this.setState({ mostrarModal: false })}>
-                                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-x-lg" viewBox="0 0 16 16">
-                                          <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z" />
-                                       </svg>
-                                    </span>
+                                 <div className="d-flex justify-content-between">
+                                    <div>
+                                       <span className='CerrarModalsintitulo'
+                                          onClick={() => this.setState({ mostrarModal: false })}>
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-x-lg" viewBox="0 0 16 16">
+                                             <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z" />
+                                          </svg>
+                                       </span>
+                                    </div>
                                  </div>
                               }
                            </div>
 
-                           <div> <Componentes openModalExitoso={this.openModalExitoso} closeModal={this.closeModal} boton={this.state.boton} Id={this.state.IdMecanismoModal} Areas={this.props.SubAreas} Direcciones={this.props.Direcciones} currentUser={this.props.currentUser} NombreSubsitio="" Subsitio="" Titulo="Titulo" context={this.props.context} Desabilitado={this.state.Editar} />
+                           <div> <Componentes openModalExitoso={this.openModalExitoso} closeModal={this.closeModal} boton={this.state.boton} Id={this.state.IdMecanismoModal} Areas={this.props.SubAreas} Direcciones={this.props.Direcciones} currentUser={this.props.currentUser} NombreSubsitio="" Subsitio="" Titulo="Titulo" context={this.props.Webpartcontext} Desabilitado={this.state.Editar} accion ={this.state.accion}  />
 
                            </div>
                         </div>
@@ -1522,23 +1930,17 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
                   this.state.mostrarModal && this.state.boton !== "vermas"?
                   <div className="modal-container overflow-auto">
                   <div className="modal-window-Sintitutlo">
-                     <div>
-                        <div id="EncabezadoComponente">
-                              <div>
-                                 <span className='CerrarModalsintitulo'
-                                    onClick={() => this.setState({ mostrarModal: false })}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-x-lg" viewBox="0 0 16 16">
-                                       <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z" />
-                                    </svg>
-                                 </span>
-                              </div>
                            
-                        </div>
-
-                        <div> <Componentes openModalExitoso={this.openModalExitoso} closeModal={this.closeModal} boton={this.state.boton} Id={this.state.IdMecanismoModal} Areas={this.props.SubAreas} Direcciones={this.props.Direcciones} currentUser={this.props.currentUser} NombreSubsitio="" Subsitio="" Titulo="Titulo" context={this.props.context} Desabilitado={this.state.Editar} />
-
-                        </div>
+                     <div>
+                        <span className='CerrarModalsintitulo'
+                           onClick={() => this.setState({ mostrarModal: false })}>
+                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-x-lg" viewBox="0 0 16 16">
+                              <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z" />
+                           </svg>
+                        </span> 
+                        <Componentes openModalExitoso={this.openModalExitoso} closeModal={this.closeModal} boton={this.state.boton} Id={this.state.IdMecanismoModal} Areas={this.props.SubAreas} Direcciones={this.props.Direcciones} currentUser={this.props.currentUser} NombreSubsitio="" Subsitio="" Titulo="Titulo" context={this.props.Webpartcontext} Desabilitado={this.state.Editar} accion ={this.state.accion}/>
                      </div>
+                     
                   </div>
                </div>
                :null
@@ -1585,4 +1987,6 @@ class Aprobaciones extends React.Component<IAprobacionesProps, any>{
    }
 }
 
-export default withRouter(Aprobaciones)
+
+ 
+ export default(withRouter(Aprobaciones));

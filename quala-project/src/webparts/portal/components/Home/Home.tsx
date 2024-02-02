@@ -1,10 +1,12 @@
 import * as React from "react";
+import { connect } from 'react-redux';
+import { withRouter } from 'react-router-dom';
 import { PNP } from "../Util/util";
 import { Link } from 'react-router-dom';
 
 
 export interface IHomeProps {
-  context: any;
+  webPartContext: any;
   userId: any;
   urlSite: any;
   paisActual: any;
@@ -13,16 +15,17 @@ export interface IHomeProps {
   SubAreas: any;
   gestores: any;
   linkIntranet: string
+  parametros: {ID: any; Llave: string; Valor: string; Descripcion: string; } [];
 }
 
-export default class Home extends React.Component<IHomeProps, any> {
+class Home extends React.Component<IHomeProps, any> {
   public pnp: PNP;
   public nombreDireccion: "";
 
   
   constructor(props: any) {
     super(props);
-    this.pnp = new PNP(this.props.context);
+    this.pnp = new PNP(this.props.webPartContext);
 
     this.state = {
       Direcciones: this.props.Direcciones,
@@ -33,6 +36,7 @@ export default class Home extends React.Component<IHomeProps, any> {
       gestores: [],
     };
   }
+
   componentWillMount() {
     //this.consultaParametrosGenerales()
 
@@ -40,7 +44,6 @@ export default class Home extends React.Component<IHomeProps, any> {
   
   }
   
-
   /*Funcion que consulta los link para funcion del boton intranet en la lista de parametros generales
     private consultaParametrosGenerales(){
         this.pnp.getListItems(
@@ -63,7 +66,6 @@ export default class Home extends React.Component<IHomeProps, any> {
     */
 
  
-
   public render(): React.ReactElement<IHomeProps> {
     return (
       <div id="ContenedorInicio">
@@ -84,29 +86,28 @@ export default class Home extends React.Component<IHomeProps, any> {
             <div className="no-shadow">
               <div className="card-body">
               <div className="row mb-6">
-                  {this.props.urlSite 
-                    ? this.state.Direcciones && this.state.Direcciones.length > 0 
+                  {this.props.urlSite ? this.state.Direcciones && this.state.Direcciones.length > 0 
                       ? this.state.Direcciones.map((d: any) => (
                           <div className="col-lg-6 col-md-6 col-xl-3 col-xxl-3 mb-6" key={d.ID}>
                             <h4 className="card-title align-items-start flex-column">
-                              <Link to={"/Visor/" + d.NombreDireccion }> {d.NombreDireccion} </Link>
+                              <Link to={"/Visor/" + d.ID }> {d.NombreDireccion} </Link>
                               <div className="separator mt-4 mb-4"></div>
                               {this.state.Areas && this.state.Areas.length > 0 
                                 ? this.state.Areas.map((e: any) => {
-                                    if(d.NombreDireccion === e.Direccion) {
+                                    if(d.NombreDireccion2 === e.Direccion) {
                                       // Verificar si el área tiene subáreas
                                       
                                       return (
                                         <div key={e.ID}>
                                           {                                          
-                                            <Link to={"/Visor/" + d.NombreDireccion + "/" + e.NombreArea} className="fw-bold d-block fs-6 text-gray-600 text-hover-primary mt-2">{e.NombreArea}</Link>
+                                            <Link to={"/Visor/" + e.ID} className="fw-bold d-block fs-6 text-gray-600 text-hover-primary mt-2">{e.NombreArea}</Link>
                                           }
                                           {
                                             this.state.SubAreas && this.state.SubAreas.length > 0 
                                               ? this.state.SubAreas.map((s: any) => {
                                                   if(s.Area === e.NombreArea) {
                                                     return (
-                                                      <Link to={"/Visor/" + d.NombreDireccion + "/" + e.NombreArea + "/" + s.NombreSubArea} className="fw-bold d-block fs-6 text-gray-600 text-hover-primary mt-2 mx-4" key={s.ID}>
+                                                      <Link to={"/Visor/" + s.ID} className="fw-bold d-block fs-6 text-gray-600 text-hover-primary mt-2 mx-4" key={s.ID}>
                                                         {s.NombreSubArea}
                                                       </Link>
                                                     );
@@ -145,8 +146,8 @@ export default class Home extends React.Component<IHomeProps, any> {
             <div className="d-flex align-items-center">
             {this.props.gestores ?
               <div className="col-md-12 my-41 me-3">
-                   <Link to={"/CrearModelo"}>
-                      <span className="btn btn-sm btn-outline btn-outline-primary btn-active-primary">Crear Modelo de Área</span>
+                   <Link to={"/CrearModelo"}>                                                           
+                      <span className="btn btn-sm btn-outline btn-outline-primary btn-active-primary">{(this.props.parametros.filter((elemento: any) => elemento.Llave === "BotonCrearModelodearea")[0] ?? {}).Valor}</span>
                   </Link>
                  </div>
                                         
@@ -162,8 +163,8 @@ export default class Home extends React.Component<IHomeProps, any> {
 
             <div className="d-flex align-items-center me-3">
               <div className="col-md-12 textAlign">
-                <a href={this.props.linkIntranet} className="btn-ajs">
-                  Intranet
+                <a href={this.props.linkIntranet} className="btn-ajs">                
+                {(this.props.parametros.filter((elemento: any) => elemento.Llave === "linkCrearModelodearea")[0] ?? {}).Valor}
                 </a>
               </div>
             </div>
@@ -173,3 +174,11 @@ export default class Home extends React.Component<IHomeProps, any> {
     );
   }
 }
+
+const mapStateToProps = (state:any) => {
+  return {
+  parametros: state.parametros.parametros,
+  };
+};
+
+export default connect(mapStateToProps)(withRouter(Home));

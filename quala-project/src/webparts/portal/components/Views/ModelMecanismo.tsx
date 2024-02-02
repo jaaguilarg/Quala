@@ -14,15 +14,20 @@ interface ModalMecanismoProps {
     Direccion: string;
     IdVisor: string;
     EstadoTablaModelo: any;
-    SetEstadoTablaModelo: any;
+    SetEstadoTablaModelo: () => void;
     Ficha: any;
     closeModal: () => void;
     tablaModelo: () => void;
+    
 }
+
 
 const ModelMecanismo: React.FC<ModalMecanismoProps> = ({Context,UserId,UrlSitio,Titulo,Acceso,DocumentosMecanismo,
     NombreMecanismo,Direccion,IdVisor, EstadoTablaModelo,SetEstadoTablaModelo,Ficha,tablaModelo,closeModal}) => {
-    return (
+                  
+      
+      
+      return (
         <div className="modal-container overflow-auto">
             <div className="modal-container overflow-auto">
             <div className="modal-window">
@@ -41,12 +46,7 @@ const ModelMecanismo: React.FC<ModalMecanismoProps> = ({Context,UserId,UrlSitio,
                   </div>
                   {/* <p className='ptext'>Ficha mecanismo</p> */}
                   <h1>{NombreMecanismo}</h1>
-                  <ul className="breadcrumb breadcrumb-dot fw-bold text-gray-600 fs-7 my-1">
-                    <li className="breadcrumb-item text-gray-600">
-                      <Link to="/">
-                        <a className="text-gray-600 text-hover-primary">Fix Titulo</a>
-                      </Link>
-                    </li>
+                  <ul className="breadcrumb breadcrumb-dot fw-bold text-gray-600 fs-7 my-1">                   
                     <li className="breadcrumb-item text-gray-600">
                       <Link to={"/Visor/" + Direccion + "/" + IdVisor}>
                         <a className="text-gray-600 text-hover-primary">

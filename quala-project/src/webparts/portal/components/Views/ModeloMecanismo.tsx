@@ -1,5 +1,7 @@
 import * as React from "react";
 import { PNP } from "../Util/util";
+import { withRouter } from "react-router-dom";
+
 
 export interface IModeloMecanismo {
     context: any;
@@ -8,29 +10,79 @@ export interface IModeloMecanismo {
     estadoTablaModelo: any;
     SetEstadoTablaModelo: any;
     ficha: any;
+    match: any;
+    
 }
 
-export default class ModeloMecanismo extends React.Component<IModeloMecanismo, any> {
+
+class ModeloMecanismo extends React.Component<IModeloMecanismo, any> {
     public pnp: PNP;
     constructor(props: any) {
         super(props);   
         
         this.pnp = new PNP(props.context);
+      
+        this.state={
+          revisionURL: false,
+          fichaModelo:[],
+          Cambio:false,
+      }  
      }
 
 
+    public revisionURL() {
+
+      console.log("hola mundo")
+
+
+      if(this.props.estadoTablaModelo){
+        this.setState({
+          Cambio:true
+        })
+      }
+      if(this.props.estadoTablaModelo || this.props.match.params.IdMecanismo != undefined ){
+        
+        this.setState({revisionURL:true},()=>{
+          if(this.props.ficha){
+            this.setState({
+              fichaModelo:this.props.ficha
+            })
+          }else{
+            this.pnp.getListItems(
+              "Mecanismos Local",
+              ["*"],
+              "ID eq " + this.props.match.params.IdMecanismo,
+              "").then((items)=>{
+                this.setState({
+                  fichaModelo:items
+                })
+              })
+          }
+        })
+      }else{
+        console.log("False")
+      }
+     
+     }
+
+
+
+    public componentWillMount() {
+      this.revisionURL()
+    } 
+     
 
      public render(): React.ReactElement<IModeloMecanismo> {
 
         return(<>
              <div className="row">
                   <div className="col-md-8">
-                    <p id="TextoModelo">Modelos en los que aplica este mecanismo</p>
+                    <p id="TextoModelo">Modelos en los que aplica este mecanismo  </p>
                   </div>
 
                   <div className="col-md-41 alingR">
                     {!this.props.estadoTablaModelo ? (
-                      <a onClick={() => {this.props.funTabla;}}>
+                      <a onClick={() => {this.props.funTabla();}}>
                         <svg xmlns="http://www.w3.org/2000/svg"
                           width="16" height="16" fill="currentColor"
                           className="bi bi-plus" viewBox="0 0 16 16">
@@ -39,7 +91,7 @@ export default class ModeloMecanismo extends React.Component<IModeloMecanismo, a
                       </a>
                     ) : (
                       <a
-                        onClick={() => {this.props.SetEstadoTablaModelo;}}>
+                        onClick={() => {this.props.SetEstadoTablaModelo(!this.props.estadoTablaModelo)}}>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="16"
@@ -58,7 +110,7 @@ export default class ModeloMecanismo extends React.Component<IModeloMecanismo, a
                   </div>
                 </div>
 
-                {this.props.estadoTablaModelo ? (
+                {this.state.revisionURL && this.state.Cambio == true? (
                   <table>
                     <tr id="encabezadoFicha">
                       <th>MODELO</th>
@@ -66,9 +118,8 @@ export default class ModeloMecanismo extends React.Component<IModeloMecanismo, a
                       <th>DRIVER</th>
                       <th>MECANISMO</th>
                     </tr>
-
-                    {this.props.ficha.map((e: any) => (
-                      <tr>
+                    {this.props.ficha.map((e: any, index: number) => (
+                      <tr key={index}>
                         <td>{e.NombreModelo}</td>
                         <td>{e.NombrePilar}</td>
                         <td>{e.NombreDriver}</td>
@@ -76,7 +127,30 @@ export default class ModeloMecanismo extends React.Component<IModeloMecanismo, a
                       </tr>
                     ))}
                   </table>
-                ) : null}
+                ):null}
+
+
+
+          {this.state.revisionURL && this.state.Cambio == false?(
+                  <table>
+                    <tr id="encabezadoFicha">
+                      <th>MODELO</th>
+                      <th>PILAR</th>
+                      <th>DRIVER</th>
+                      <th>MECANISMO</th>
+                    </tr>
+                    {this.state.fichaModelo.map((e: any, index: number) => (
+                      <tr>
+                        <td>{e.Nombre_x0020_Modelo}</td>
+                        <td>{e.Nombre_x0020_Pilar}</td>
+                        <td>{e.Nombre_x0020_Driver}</td>
+                        <td>{e.Nombre_x0020_Mecanismo_x0020_Bas}</td>
+                      </tr>
+                    ))}
+                  </table>
+                ):null}
         </>)
      }
 }
+
+export default withRouter(ModeloMecanismo);

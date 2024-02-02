@@ -1,97 +1,95 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
+import { connect } from 'react-redux';
+import { withRouter, RouteComponentProps  } from 'react-router-dom';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Button from '@mui/material/Button';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
-export interface IInformacionGC {
+
+export interface IInformacionGC extends RouteComponentProps {
     context: any;
     userId: any;
     urlSite: any;
     Gestor: any;
-    infoMenus: any;   
+    infoMenus: any;
+    parametros: {ID: any; Llave: string; Valor: string; Descripcion: string; } [];
 }
 
-export default class InformacionGC extends React.Component<IInformacionGC, any> {
+
+class InformacionGC extends React.Component<IInformacionGC, any> {
+    menuRef:any;
+
     constructor(props: any) {
-        super(props);          
+        super(props);
+        
+        this.state = {
+          anchorEl: null,
+        };    
      }
-              
+
+    handleMenuItemClick = (url:any) => {     
+      if (url.startsWith("http://") || url.startsWith("https://")) {       
+        window.open(url, "_blank");
+      } else {        
+        this.props.history.push(url);
+      }
+
+      this.handleClose(); 
+    };
+
+    handleClick = (event:any) => {
+      this.setState({ anchorEl: event.currentTarget });
+    };
+  
+    handleClose = () => {
+      this.setState({ anchorEl: null });
+    };
+
+                            
     public render(): React.ReactElement<IInformacionGC> {
-    
-        return(<>
-        {this.props.Gestor ? (
-                          <nav id="AlingInfoGC" className="navbar navbar-expand-lg" >
-                            <ul className="navbar-nav">
-                              <li className="nav-item dropdown text-decoration1">
-                                Información GC
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                  fill="currentColor" className="bi bi-chevron-down" viewBox="0 0 16 16">
-                                  <path
-                                    fill-rule="evenodd"
-                                    d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"
-                                  />
-                                </svg>
-                                <ul className="dropdown-menu">
-                                  {this.props.infoMenus.map((d: any)=>(
-                                  <li className="nav-item" >           
-                                     {d.Enlace.startsWith("/") ? (
-                                      <Link to={d.Enlace} title={d.Nombre_x0020_Menu} className="fw-bold d-block fs-6 text-gray-600 text-hover-primary mt-2">
-                                        {d.Nombre_x0020_Menu}
-                                      </Link>
-                                    ) : (
-                                      <a href={d.Enlace} target="_blank" rel="noopener noreferrer" title={d.Nombre_x0020_Menu} className="fw-bold d-block fs-6 text-gray-600 text-hover-primary mt-2">
-                                        {d.Nombre_x0020_Menu}
-                                      </a>
-                                    )}
-                                  </li>))
-                                  }                                                                 
-                                </ul>
-                              </li>
-                            </ul>
-                          </nav>
-                          ) : (
-                            <nav id="AlingInfoGC" className="navbar navbar-expand-lg">
-                              <ul className="navbar-nav">
-                                <li className="nav-item dropdown text-decoration1">
-                                  Información GC
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    fill="currentColor"
-                                    className="bi bi-chevron-down"
-                                    viewBox="0 0 16 16"
-                                  >
-                                    <path
-                                      fill-rule="evenodd"
-                                      d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"
-                                    />
-                                  </svg>
-                                  <ul className="dropdown-menu">
-                                    {this.props.infoMenus &&
-                                    this.props.infoMenus.length > 0
-                                      ? this.props.infoMenus.map((e: any) => (
-                                          <li className="nav-item dropdownSubMenu">
-                                            {" "}
-                                            <a
-                                              id="grayc"
-                                              href={e.Link}
-                                              target="_blank"
-                                              rel="noreferrer noopener"
-                                            >
-                                              {e.Title}
-                                            </a>
-                                          </li>
-                                        ))
-                                      : null}
-                                  </ul>
-                                </li>
-                              </ul>
-                            </nav>
-                          )}
-        </>)
 
+      const { anchorEl } = this.state;
+      const open = Boolean(anchorEl);
+      
+        return(<>                                
+            <div onMouseLeave={this.handleClose}>
+              <Button
+                className="text-decoration1"
+                aria-controls="simple-menu"
+                aria-haspopup="true"
+                onMouseOver={this.handleClick}               
+                endIcon={<ArrowDropDownIcon />}
+              >
+                {(this.props.parametros.filter((elemento: any) => elemento.Llave === "LabelInformacionGC")[0] ?? {}).Valor}                
+              </Button>
+              <Menu
+                id="simple-menu"
+                className="text-decoration1"
+                anchorEl={anchorEl}
+                keepMounted
+                open={open}
+                PaperProps={
+                  {
+                    onMouseLeave: this.handleClose,
+                  }
+                }
+                onClose={this.handleClose}
+              >
+                {this.props.infoMenus.map((d:any, index:any) => (
+                  <MenuItem key={index} onClick={() => this.handleMenuItemClick(d.Enlace)}>
+                    {d.Nombre_x0020_Menu}
+                  </MenuItem>
+                ))}
+              </Menu>
+            </div> </>)        
     }
-    
-
-
 }
+
+const mapStateToProps = (state:any) => {
+  return {
+  parametros: state.parametros.parametros,
+  };
+};
+
+export default connect(mapStateToProps)(withRouter(InformacionGC));

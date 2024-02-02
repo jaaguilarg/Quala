@@ -15,8 +15,10 @@ import { IReadonlyTheme } from '@microsoft/sp-component-base';
 
 import * as strings from 'PortalWebPartStrings';
 import Portal from './components/Portal';
+import { ErrorBoundary } from './components/Util/ErrorBoundary';
 
 const _store = createStore(rootReducer, applyMiddleware(thunk));
+
 
 
 export interface IPortalWebPartProps {
@@ -31,9 +33,10 @@ export default class PortalWebPart extends BaseClientSideWebPart<IPortalWebPartP
   
 
   public render(): void {   
-
+    
     const element = (
       <Provider store={_store}>
+        <ErrorBoundary>
           <Portal
               description={this.properties.description}
               isDarkTheme={this._isDarkTheme}
@@ -42,7 +45,9 @@ export default class PortalWebPart extends BaseClientSideWebPart<IPortalWebPartP
               userDisplayName={this.context.pageContext.user.displayName}
               context={this.context}
           />
+          </ErrorBoundary>
       </Provider>
+
   );
     ReactDom.render(element, this.domElement);
    

@@ -94,8 +94,7 @@ class ComentarDocumentos extends React.Component<IComentarDocumentosProps, any>{
     //Funcion que identifica la cnatidad de caracteres en un cadena de texto
     private longitudcadena(cantidad:any){
         const result=cantidad.length
-        this.setState({CantidadCaracteres:result})
-        console.log(result)
+        this.setState({CantidadCaracteres:result})   
     }
 
     //Funcion que asocia al usuario de seguridad  que se colocan en el campo PeoplePicker.
@@ -1242,7 +1241,7 @@ class ComentarDocumentos extends React.Component<IComentarDocumentosProps, any>{
                                           </div>
                                           <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12">
                                              <figure>
-                                                <img title='.' id="imagenfinal" src={this.props.urlSitioPrincipal + "/Style%20Library/Root/Quala_Logo_Home.png"} width="35%" height="auto" />
+                                                <img title='.' id="imagenfinal" src={this.props.urlSitioPrincipal + "/ActivosGC/Root/Quala_Logo_Home.png"} width="35%" height="auto" />
                                              </figure>
                                              <span className="text-gray-600 fs-5">Su comentario ha sido enviado exitosamente a {this.state.dueñoContenido} dueño de contenido.</span>
                                           </div>

@@ -1,26 +1,28 @@
-import * as React from 'react'
+import * as React from 'react';
 import { connect } from 'react-redux';
-import { PNP } from '../Util/util'
+import { PNP } from '../Util/util';
 import 'react-quill/dist/quill.snow.css'; 
-import {withRouter} from 'react-router-dom'
+import {withRouter} from 'react-router-dom';
 import {
   PeoplePicker,
-  PrincipalType,} from '@pnp/spfx-controls-react/lib/PeoplePicker'
-import '@pnp/sp/taxonomy'
+  PrincipalType,} from '@pnp/spfx-controls-react/lib/PeoplePicker';
+import '@pnp/sp/taxonomy';
 import * as _ from "underscore";
-import '@pnp/sp/sites'
-import '@pnp/sp/features'
-import '@pnp/sp/webs'
-import '@pnp/sp/lists'
-import '@pnp/sp/content-types'
-import '@pnp/sp/folders'
-import '@pnp/sp/items'
+import '@pnp/sp/sites';
+import '@pnp/sp/features';
+import '@pnp/sp/webs';
+import '@pnp/sp/lists';
+import '@pnp/sp/content-types';
+import '@pnp/sp/folders';
+import '@pnp/sp/items';
+
 
 
 export interface IComponentesProps {
 
   Titulo: any
   context: any
+  Webpartcontext: any
   Subsitio: any
   NombreSubsitio: any
   match: any
@@ -37,6 +39,8 @@ export interface IComponentesProps {
   openModalExitoso: any
   cambioEstadoAprobacion: any
   parametros: any
+  accion: any
+  
 
 }
 
@@ -45,6 +49,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
   public pnp: PNP
   constructor(props: any) {
     super(props)
+
     this.pnp = new PNP(this.props.context)
  
 
@@ -242,6 +247,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
     if(pos==-1){
       auxiliar.push({TipoFormato:TipoFormato,Url:Url})
     }else{
+      
       auxiliar[pos]={TipoFormato:TipoFormato,Url:Url}
     }
 
@@ -579,7 +585,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
   private consultarMatrizAprobacion() {
     const parametro = this.props.parametros.find((p:any) => p.Llave === "MatrizAprobacion");
 
-    parametro.length > 0 ? this.setState({MatrizAprobacion: parametro}, () => {this.ConsultarMatriz(this.state.tipoMecanismo)}) : null;
+    parametro && parametro.length > 0 ? this.setState({MatrizAprobacion: parametro}, () => {this.ConsultarMatriz(this.state.tipoMecanismo)}) : null;
         
   }
 
@@ -861,12 +867,13 @@ class Componentes extends React.Component<IComponentesProps, any>{
   
   // Funcion que consulta las direcciones desde el sitio principal y retorna un objeto con esta informacion.
   public consultarSubarea() {
-    /*
+    
     const ViewXml = `
 
       <FieldRef Name="Direccion"/>
       <FieldRef Name="Area"/>
       <FieldRef Name="SubArea"/>
+
     `;
     const filterXml = `
       <Query>
@@ -896,7 +903,77 @@ class Componentes extends React.Component<IComponentesProps, any>{
         this.setState({
           SubAreasFilial: SubAreasFilial,
         });
-      });*/
+      })
+  }
+
+  // Funcion consultat tipo de mecanismo
+  public ConsultarTipoMecanismo(ID: any){
+    var ViewXml = `<FieldRef Name="ID"/>
+                   <FieldRef Name="Pais"/>
+                   <FieldRef Name="Direccion_x0020_Solicitud"/>
+                   <FieldRef Name="Area_x0020_Solicitud"/>
+                   <FieldRef Name="Tipomecanismo"/>
+                   <FieldRef Name="Requiere_x0020_Auditoria"/>
+                   <FieldRef Name="Seguridad"/>
+                   <FieldRef Name="Subarea_x0020_Solicitud"/>
+                   <FieldRef Name="Driver"/>
+                   <FieldRef Name="Pilar"/>
+                   <FieldRef Name="Tipo_x0020_de_x0020_Mecanismo"/>
+                   <FieldRef Name="Nombre_x0020_del_x0020_mecanismo"/>
+                   <FieldRef Name="Aplica_x0020_a_x0020_planta"/>
+                   <FieldRef Name="Planta"/>
+                   <FieldRef Name="Proceso"/>
+                   <FieldRef Name="ID_x0020_Mecanismo_x0020_Local"/>
+                   <FieldRef Name="Nombre_x0020_del_x0020_mecanismo"/>
+                   <FieldRef Name="Nombre_x0020_actual_x0020_del_x0020_mecanismo"/>
+                   <FieldRef Name="Nombre_x0020_Solicitante"/>
+                   <FieldRef Name="Motivo_x0020_del_x0020_Cambio"/>
+                   <FieldRef Name="Descripcion_x0020_del_x0020_cambio"/>
+                   <FieldRef Name="Fecha_x0020_Inicio_x0020_Solicitud"/>
+                   <FieldRef Name="Fecha_x0020_Finalizacion_x0020_Solicitud"/>`
+    
+    var FilterXml = `<Query>
+                        <Where>
+                          <Eq>
+                              <FieldRef Name='ID'></FieldRef>
+                              <Value Type="Number">`+ID+`</Value>
+                          </Eq>
+                        </Where>                       
+                      </Query> `
+                      
+    this.pnp.getListItemsWithTaxo('',"Control Solicitudes",ViewXml,FilterXml,"").then((respuesta)=>{
+      
+      console.log(respuesta[0].Tipomecanismo.Label)
+
+      this.setState({
+        IdSolicitud: respuesta[0].ID,
+        Pais: respuesta[0].Pais,
+        direccion: respuesta[0].Direccion_x0020_Solicitud,
+        area: respuesta[0].Area_x0020_Solicitud,
+        tipoMecanismo: respuesta[0].Tipomecanismo.Label,
+        Auditoria: respuesta[0].Requiere_x0020_Auditoria,
+        seguridad: respuesta[0].Seguridad,
+        SubArea: respuesta[0].Subarea_x0020_Solicitud,
+        Driver: respuesta[0].Driver,
+        Pilar: respuesta[0].Pilar,
+        SeccionMecanismo: respuesta[0].Tipo_x0020_de_x0020_Mecanismo,
+        NombreMecanismo: respuesta[0].Nombre_x0020_del_x0020_mecanismo,
+        //PersonaSeguridad: respuesta[0].PersonaSeguridadId,
+        AplicaPlanta: respuesta[0].Planta ? true : false,
+        PlantasGuardadas: respuesta[0].Planta,
+        IDMecanismo: respuesta[0].ID_x0020_Mecanismo_x0020_Local,
+        pilarSelected: respuesta[0].Pilar,
+        //TipoSolicitud: respuesta[0].TipoSolicitud,
+        NombreMecanismoSelected: respuesta[0].Nombre_x0020_del_x0020_mecanismo,
+        NombreMecanismoLocal: respuesta[0].Nombre_x0020_actual_x0020_del_x0,
+        PersonaElabora: respuesta[0].NombreId,
+        Motivo: respuesta[0].Motivo_x0020_del_x0020_Cambio,
+        DescripcionMotivo: respuesta[0].Descripcion_x0020_del_x0020_camb,
+        FechaInicioSolicitud: respuesta[0].Fecha_x0020_Inicio_x0020_Solicit,
+        FechaFinSolicitud: respuesta[0].Fecha_x0020_Finalizacion_x0020_S,
+      })
+    })                  
+   
   }
 
   // Funcion para consultar los modelos encontrados en la biblioteca modelos
@@ -905,7 +982,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
 
     this.pnp
       .getListItems(
-        'Modelos',
+        'Modelos Local',
         ['*'],
         "Correspondencia eq '" + filter + "'",
         '',
@@ -1030,7 +1107,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
     this.pnp.getListItemsRoot(
       'Control Solicitudes',
       ["*"],
-      "ID eq " + this.state.idMecanismo,
+      "ID eq '" + this.state.idMecanismo + "'",
       '',
     )
       .then(respuesta => {
@@ -1043,11 +1120,11 @@ class Componentes extends React.Component<IComponentesProps, any>{
           Pais: respuesta[0].Pais,
           direccion: respuesta[0].Direccion_x0020_Solicitud,
           area: respuesta[0].Area_x0020_Solicitud,
-          tipoMecanismo: respuesta[0].Tipo_x0020_de_x0020_Mecanismo,
+          tipoMecanismo: respuesta[0].Tipomecanismo,
           Auditoria: respuesta[0].Requiere_x0020_Auditoria,
           seguridad: respuesta[0].Seguridad,
           SubArea: respuesta[0].Subarea_x0020_Solicitud,
-          Driver: respuesta[0].Mecanismo_x0020_del_x0020_Driver,
+          Driver: respuesta[0].Driver,
           Pilar: respuesta[0].Pilar,
           SeccionMecanismo: respuesta[0].Tipo_x0020_de_x0020_Mecanismo,
           NombreMecanismo: respuesta[0].Nombre_x0020_del_x0020_mecanismo,
@@ -1084,7 +1161,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
             this.sendDataToControlList()
           }
           else{
-            this.ConsultarMatriz(respuesta[0].Tipo_x0020_de_x0020_Mecanismo);
+            this.ConsultarMatriz(respuesta[0].Tipomecanismo);
           }
           this.consultarMecanismoFiltro(respuesta[0].Mecanismo_x0020_del_x0020_Driver, respuesta[0].Tipo_x0020_de_x0020_Mecanismo, true)
           this.plantas()
@@ -1223,7 +1300,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
 
   //Funcion para consultar las direcciones de las solicitudes abiertas
   private consultarDirecciones() {
-    /*
+    
     var ViewXml = `<FieldRef Name="Direccion"/>`
 
     this.pnp.getListItemsWithTaxo('', 'EstructuraOrganizacional', ViewXml)
@@ -1243,7 +1320,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
           DireccionesFilial: DireccionesFilial,
         })
       })
-    */
+    
 
     this.consultarTipoMecanismo();
     this.consultarMotivos()
@@ -1293,7 +1370,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
 
     if (subArea && subArea.length > 0) {
 
-      this.pnp.getListItems('Modelos',
+      this.pnp.getListItems('Modelos Local',
         ['*'],
         "Correspondencia eq '" + subArea + "'",
         '')
@@ -1301,10 +1378,10 @@ class Componentes extends React.Component<IComponentesProps, any>{
           if (informacion && informacion.length > 0) {
             informacion.forEach((element: any) => {
               this.pnp.getListItems(
-                'PilaresFilial',
-                ['*', 'NombreModelo/NombreModelo'],
-                "NombreModelo/NombreModelo eq '" + element.Title + "'",
-                'NombreModelo',
+                'Pilares Local',
+                ['*', 'Nombre Modelo/Nombre Modelo'],
+                "Nombre Modelo/Nombre Modelo eq '" + element.Title + "'",
+                'Nombre Modelo',
               )
                 .then(Arraypilares => {
                   if (Arraypilares && Arraypilares.length > 0) {
@@ -1323,7 +1400,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
     }
 
     else if (area && area.length > 0) {
-      this.pnp.getListItems('Modelos',
+      this.pnp.getListItems('Modelos Local',
         ['*'],
         "Correspondencia eq '" + area + "'",
         '')
@@ -1331,10 +1408,10 @@ class Componentes extends React.Component<IComponentesProps, any>{
           if (informacion && informacion.length > 0) {
             informacion.forEach((element: any) => {
               this.pnp.getListItems(
-                'PilaresFilial',
-                ['*', 'NombreModelo/NombreModelo'],
-                "NombreModelo/NombreModelo eq '" + element.Title + "'",
-                'NombreModelo',
+                'Pilares Local',
+                ['*', 'Nombre Modelo/Nombre Modelo'],
+                "Nombre Modelo/Nombre Modelo eq '" + element.Title + "'",
+                'Nombre Modelo',
               )
                 .then(Arraypilares => {
                   if (Arraypilares && Arraypilares.length > 0) {
@@ -1355,7 +1432,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
 
     }
     else if (direccion && direccion.length > 0) {
-      this.pnp.getListItems('Modelos',
+      this.pnp.getListItems('Modelos Local',
         ['*'],
         "Correspondencia eq '" + direccion + "'",
         '')
@@ -1363,10 +1440,10 @@ class Componentes extends React.Component<IComponentesProps, any>{
           if (informacion && informacion.length > 0) {
             informacion.forEach((element: any) => {
               this.pnp.getListItems(
-                'PilaresFilial',
-                ['*', 'NombreModelo/NombreModelo'],
-                "NombreModelo/NombreModelo eq '" + element.Title + "'",
-                'NombreModelo',
+                'Pilares Local',
+                ['*', 'Nombre Modelo/Nombre Modelo'],
+                "Nombre Modelo/Nombre Modelo eq '" + element.Title + "'",
+                'Nombre Modelo',
               )
                 .then(Arraypilares => {
                   if (Arraypilares && Arraypilares.length > 0) {
@@ -1397,10 +1474,10 @@ class Componentes extends React.Component<IComponentesProps, any>{
   public ConsultarPilares() {
     this.pnp
       .getListItems(
-        'PilaresFilial',
-        ['*', 'NombreModelo/NombreModelo'],
+        'Pilares Local',
+        ['*', 'Nombre Modelo/Nombre Modelo'],
         "",
-        'NombreModelo',
+        'Nombre Modelo',
       )
       .then((res) => {
         if (res.length > 0) {
@@ -1619,7 +1696,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
     // this.setState({
     //   Pilar:""
     // },()=> {Pilar:pilarSelected.split("`")[1]})
-    this.pnp.getListItems("DriverFilial",
+    this.pnp.getListItems("Driver Local",
       ["*"], `PilarId eq ${pilarSelected.split("`")[0]}`, ""
     )
       .then(respuesta => {
@@ -1640,6 +1717,25 @@ class Componentes extends React.Component<IComponentesProps, any>{
     this.consultarAreas();
     this.consultarTipoMecanismo();
     this.consultarMatrizAprobacion();
+    this.ConsultarTituloResponderAjustes();
+    this.ConsultarTextoResponderAjustes();
+    this.ConsultarTextoComentariosRevisor();
+    this.ConsultarTituloEnviarAjustes();
+    this.ConsultarTextoEnviarAjustes();
+    this.ConsultarTextoObservaciones();
+    this.ConsultarTituloEnviarAPublicacion();
+    this.ConsultarTextoEnviarAPublicacionCreacion1();
+    this.ConsultarTextoEnviarAPublicacionCreacion2();
+    this.ConsultarTituloCancelarsolicitud();
+    this.ConsultarTextoCancelarsolicitud();
+    this.ConsultarTextoComentarios();
+    this.ConsultarTituloActivarAprobación();
+    this.ConsultarTextoActivarAprobación();
+    
+
+    switch(this.props.accion){
+      case 'vermas':this.ConsultarTipoMecanismo(this.props.Id)
+    }
 
   }
 
@@ -2047,6 +2143,371 @@ class Componentes extends React.Component<IComponentesProps, any>{
 
   }
 
+  // Funcion para consultar el titulo "Titulo responder ajustes" en parametros tecnicos
+  private ConsultarTituloResponderAjustes(){
+
+  this.pnp.getListItemsRoot(
+      "Parametros Tecnicos",
+      ["*"],
+      "Llave eq 'TituloResponderAjustes'",
+      ""
+    ).then((items) => {
+      console.log(items);
+      
+      
+      if (items.length > 0) {
+        // Actualiza el estado con el valor obtenido
+        this.setState({ TituloResponderAjustes: items[0].Valor });
+      } else {
+        console.log("No se encontró la llave buscada.");
+        this.setState({ TituloResponderAjustes: '' }); // O puedes establecer un valor por defecto
+      }
+    }).catch((error) => {
+      console.error("Error al consultar la lista:", error);
+      this.setState({ TituloResponderAjustes: '' }); // Manejo del estado en caso de error
+    });      
+  
+} 
+
+  // Funcion para consultar el titulo "Texto responder ajustes" en parametros tecnicos
+  private ConsultarTextoResponderAjustes(){
+
+    this.pnp.getListItemsRoot(
+        "Parametros Tecnicos",
+        ["*"],
+        "Llave eq 'TextoResponderAjustes'",
+        ""
+      ).then((items) => {
+        console.log(items);
+        
+        
+        if (items.length > 0) {
+          // Actualiza el estado con el valor obtenido
+          this.setState({ TextoResponderAjustes: items[0].Valor });
+        } else {
+          console.log("No se encontró la llave buscada.");
+          this.setState({ TextoResponderAjustes: '' }); // O puedes establecer un valor por defecto
+        }
+      }).catch((error) => {
+        console.error("Error al consultar la lista:", error);
+        this.setState({ TextoResponderAjustes: '' }); // Manejo del estado en caso de error
+      });      
+    
+  } 
+
+  // Funcion para consultar el titulo "Texto Comentarios revisor" en parametros tecnicos
+  private ConsultarTextoComentariosRevisor(){
+
+    this.pnp.getListItemsRoot(
+        "Parametros Tecnicos",
+        ["*"],
+        "Llave eq 'TextoComentariosRevisor'",
+        ""
+      ).then((items) => {
+        console.log(items);
+        
+        
+        if (items.length > 0) {
+          // Actualiza el estado con el valor obtenido
+          this.setState({ TextoComentariosRevisor: items[0].Valor });
+        } else {
+          console.log("No se encontró la llave buscada.");
+          this.setState({ TextoComentariosRevisor: '' }); // O puedes establecer un valor por defecto
+        }
+      }).catch((error) => {
+        console.error("Error al consultar la lista:", error);
+        this.setState({ TextoComentariosRevisor: '' }); // Manejo del estado en caso de error
+      });      
+    
+  } 
+  
+  // Funcion para consultar el titulo "Titulo Enviar Ajustes" en parametros tecnicos
+  private ConsultarTituloEnviarAjustes(){
+
+    this.pnp.getListItemsRoot(
+        "Parametros Tecnicos",
+        ["*"],
+        "Llave eq 'TituloEnviarAjustes'",
+        ""
+      ).then((items) => {
+        console.log(items);
+        
+        
+        if (items.length > 0) {
+          // Actualiza el estado con el valor obtenido
+          this.setState({ TituloEnviarAjustes: items[0].Valor });
+        } else {
+          console.log("No se encontró la llave buscada.");
+          this.setState({ TituloEnviarAjustes: '' }); // O puedes establecer un valor por defecto
+        }
+      }).catch((error) => {
+        console.error("Error al consultar la lista:", error);
+        this.setState({ TituloEnviarAjustes: '' }); // Manejo del estado en caso de error
+      });      
+    
+  }
+  
+  // Funcion para consultar el titulo "Texto Enviar Ajustes" en parametros tecnicos
+  private ConsultarTextoEnviarAjustes(){
+
+  this.pnp.getListItemsRoot(
+      "Parametros Tecnicos",
+      ["*"],
+      "Llave eq 'TextoEnviarAjustes'",
+      ""
+    ).then((items) => {
+      console.log(items);
+      
+      
+      if (items.length > 0) {
+        // Actualiza el estado con el valor obtenido
+        this.setState({ TextoEnviarAjustes: items[0].Valor });
+      } else {
+        console.log("No se encontró la llave buscada.");
+        this.setState({ TextoEnviarAjustes: '' }); // O puedes establecer un valor por defecto
+      }
+    }).catch((error) => {
+      console.error("Error al consultar la lista:", error);
+      this.setState({ TextoEnviarAjustes: '' }); // Manejo del estado en caso de error
+    });      
+  
+  } 
+
+  // Funcion para consultar el titulo "Texto Enviar Ajustes" en parametros tecnicos
+  private ConsultarTextoObservaciones(){
+
+    this.pnp.getListItemsRoot(
+        "Parametros Tecnicos",
+        ["*"],
+        "Llave eq 'TextoObservaciones'",
+        ""
+      ).then((items) => {
+        console.log(items);
+        
+        
+        if (items.length > 0) {
+          // Actualiza el estado con el valor obtenido
+          this.setState({ TextoObservaciones: items[0].Valor });
+        } else {
+          console.log("No se encontró la llave buscada.");
+          this.setState({ TextoObservaciones: '' }); // O puedes establecer un valor por defecto
+        }
+      }).catch((error) => {
+        console.error("Error al consultar la lista:", error);
+        this.setState({ TextoObservaciones: '' }); // Manejo del estado en caso de error
+      });      
+    
+  } 
+  
+  // Funcion para consultar el titulo "Titulo Enviar a publiacion" en parametros tecnicos
+  private ConsultarTituloEnviarAPublicacion(){
+
+    this.pnp.getListItemsRoot(
+        "Parametros Tecnicos",
+        ["*"],
+        "Llave eq 'TituloEnviarAPublicacion'",
+        ""
+      ).then((items) => {
+        console.log(items);
+        
+        
+        if (items.length > 0) {
+          // Actualiza el estado con el valor obtenido
+          this.setState({ TituloEnviarAPublicacion: items[0].Valor });
+        } else {
+          console.log("No se encontró la llave buscada.");
+          this.setState({ TituloEnviarAPublicacion: '' }); // O puedes establecer un valor por defecto
+        }
+      }).catch((error) => {
+        console.error("Error al consultar la lista:", error);
+        this.setState({ TituloEnviarAPublicacion: '' }); // Manejo del estado en caso de error
+      });      
+    
+  } 
+  
+  // Funcion para consultar el titulo "Texto Enviar a publicacion creacion 1" en parametros tecnicos
+  private ConsultarTextoEnviarAPublicacionCreacion1(){
+
+    this.pnp.getListItemsRoot(
+        "Parametros Tecnicos",
+        ["*"],
+        "Llave eq 'TextoEnviarAPublicacionCreacion1'",
+        ""
+      ).then((items) => {
+        console.log(items);
+        
+        
+        if (items.length > 0) {
+          // Actualiza el estado con el valor obtenido
+          this.setState({ TextoEnviarAPublicacionCreacion1: items[0].Valor });
+        } else {
+          console.log("No se encontró la llave buscada.");
+          this.setState({ TextoEnviarAPublicacionCreacion1: '' }); // O puedes establecer un valor por defecto
+        }
+      }).catch((error) => {
+        console.error("Error al consultar la lista:", error);
+        this.setState({ TextoEnviarAPublicacionCreacion1: '' }); // Manejo del estado en caso de error
+      });      
+    
+  }
+  
+  // Funcion para consultar el titulo "Texto Enviar a publicacion creacion 2" en parametros tecnicos
+  private ConsultarTextoEnviarAPublicacionCreacion2(){
+
+    this.pnp.getListItemsRoot(
+        "Parametros Tecnicos",
+        ["*"],
+        "Llave eq 'TextoEnviarAPublicacionCreacion2'",
+        ""
+      ).then((items) => {
+        console.log(items);
+        
+        
+        if (items.length > 0) {
+          // Actualiza el estado con el valor obtenido
+          this.setState({ TextoEnviarAPublicacionCreacion2: items[0].Valor });
+        } else {
+          console.log("No se encontró la llave buscada.");
+          this.setState({ TextoEnviarAPublicacionCreacion2: '' }); // O puedes establecer un valor por defecto
+        }
+      }).catch((error) => {
+        console.error("Error al consultar la lista:", error);
+        this.setState({ TextoEnviarAPublicacionCreacion2: '' }); // Manejo del estado en caso de error
+      });      
+    
+  }
+
+  // Funcion para consultar el titulo "Titulo Cancelar Solicitud" en parametros tecnicos
+  private ConsultarTituloCancelarsolicitud(){
+
+    this.pnp.getListItemsRoot(
+        "Parametros Tecnicos",
+        ["*"],
+        "Llave eq 'TituloCancelarsolicitud'",
+        ""
+      ).then((items) => {
+        console.log(items);
+        
+        
+        if (items.length > 0) {
+          // Actualiza el estado con el valor obtenido
+          this.setState({ TituloCancelarsolicitud: items[0].Valor });
+        } else {
+          console.log("No se encontró la llave buscada.");
+          this.setState({ TituloCancelarsolicitud: '' }); // O puedes establecer un valor por defecto
+        }
+      }).catch((error) => {
+        console.error("Error al consultar la lista:", error);
+        this.setState({ TituloCancelarsolicitud: '' }); // Manejo del estado en caso de error
+      });      
+    
+  }
+       
+  // Funcion para consultar el titulo "Texto Cancelar Solicitud" en parametros tecnicos
+  private ConsultarTextoCancelarsolicitud(){
+
+    this.pnp.getListItemsRoot(
+        "Parametros Tecnicos",
+        ["*"],
+        "Llave eq 'TextoCancelarsolicitud '",
+        ""
+      ).then((items) => {
+        console.log(items);
+        
+        
+        if (items.length > 0) {
+          // Actualiza el estado con el valor obtenido
+          this.setState({ TextoCancelarsolicitud: items[0].Valor });
+        } else {
+          console.log("No se encontró la llave buscada.");
+          this.setState({ TextoCancelarsolicitud: '' }); // O puedes establecer un valor por defecto
+        }
+      }).catch((error) => {
+        console.error("Error al consultar la lista:", error);
+        this.setState({ TextoCancelarsolicitud: '' }); // Manejo del estado en caso de error
+      });      
+    
+  }
+  
+  // Funcion para consultar el titulo "Texto comentarios" en parametros tecnicos
+  private ConsultarTextoComentarios(){
+
+    this.pnp.getListItemsRoot(
+        "Parametros Tecnicos",
+        ["*"],
+        "Llave eq 'TextoComentarios '",
+        ""
+      ).then((items) => {
+        console.log(items);
+        
+        
+        if (items.length > 0) {
+          // Actualiza el estado con el valor obtenido
+          this.setState({ TextoComentarios: items[0].Valor });
+        } else {
+          console.log("No se encontró la llave buscada.");
+          this.setState({ TextoComentarios: '' }); // O puedes establecer un valor por defecto
+        }
+      }).catch((error) => {
+        console.error("Error al consultar la lista:", error);
+        this.setState({ TextoComentarios: '' }); // Manejo del estado en caso de error
+      });      
+    
+  }  
+  
+  // Funcion para consultar el titulo "Titulo Activar aprobacion" en parametros tecnicos
+  private ConsultarTituloActivarAprobación(){
+
+    this.pnp.getListItemsRoot(
+        "Parametros Tecnicos",
+        ["*"],
+        "Llave eq 'TituloActivarAprobación '",
+        ""
+      ).then((items) => {
+        console.log(items);
+        
+        
+        if (items.length > 0) {
+          // Actualiza el estado con el valor obtenido
+          this.setState({ TituloActivarAprobación: items[0].Valor });
+        } else {
+          console.log("No se encontró la llave buscada.");
+          this.setState({ TituloActivarAprobación: '' }); // O puedes establecer un valor por defecto
+        }
+      }).catch((error) => {
+        console.error("Error al consultar la lista:", error);
+        this.setState({ TituloActivarAprobación: '' }); // Manejo del estado en caso de error
+      });      
+    
+  }
+  
+  // Funcion para consultar el titulo "Texto Activar aprobacion" en parametros tecnicos
+  private ConsultarTextoActivarAprobación(){
+
+    this.pnp.getListItemsRoot(
+        "Parametros Tecnicos",
+        ["*"],
+        "Llave eq 'TextoActivarAprobación '",
+        ""
+      ).then((items) => {
+        console.log(items);
+        
+        
+        if (items.length > 0) {
+          // Actualiza el estado con el valor obtenido
+          this.setState({ TextoActivarAprobación: items[0].Valor });
+        } else {
+          console.log("No se encontró la llave buscada.");
+          this.setState({ TextoActivarAprobación: '' }); // O puedes establecer un valor por defecto
+        }
+      }).catch((error) => {
+        console.error("Error al consultar la lista:", error);
+        this.setState({ TextoActivarAprobación: '' }); // Manejo del estado en caso de error
+      });      
+    
+  }
+
+
   public render(): React.ReactElement<IComponentesProps> {
 
     return (
@@ -2124,21 +2585,23 @@ class Componentes extends React.Component<IComponentesProps, any>{
                           <label className="form-label required">
                             Dirección
                           </label>
-
+                                            
                           <select
                             disabled={this.props.Desabilitado}
                             name="direccion"
                             value={this.state.direccion}
-                            data-control="select2"
-                            data-placeholder="Select an option"
-                            data-select2-id="select2-data-1-k7cj"
                             className="form-select select2-hidden-accessible"
                             onChange={(e) => {
                               this.TraerPilaresPorModelos(e.target.value, "", "")
                               this.inputChange(e.target)
                             }}
+                            data-control="select2"
+                            data-placeholder="Select an option"
+                            data-select2-id="select2-data-1-k7cj"
+                            
                             aria-hidden="true">
 
+                            <option hidden selected>{this.state.direccion}</option>
                             <option data-select2-id="select2-data-3-efwm"></option>
                             {this.state.DireccionesFilial.map((e: any, i: any) => (
                               <option key={i} value={e.Direcciones}>
@@ -2156,7 +2619,6 @@ class Componentes extends React.Component<IComponentesProps, any>{
 
                           <select
                             disabled={this.props.Desabilitado}
-
                             name="area"
                             value={this.state.area}
                             className="form-select select2-hidden-accessible"
@@ -2182,22 +2644,24 @@ class Componentes extends React.Component<IComponentesProps, any>{
                         </div>
 
 
-                        {this.state.SubAreasFilial &&
-                          this.state.SubAreasFilial.length > 0 ? (
+                        
                           <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                             <label className="form-label">
                               Sub Área (opcional)
                             </label>
+                            
+                        {this.state.SubArea &&
+                          this.state.SubArea.length > 0 ? (
 
                             <select
                               disabled={this.props.Desabilitado}
-                              name="subArea"
-                              value={this.state.subArea}
-                              onChange={(e) => {
-                                this.TraerPilaresPorModelos("", "", this.state.subArea)
-                                this.inputChange(e.target)
-                              }}
+                              name="SubArea"
+                              value={this.state.SubArea}
                               className="form-select select2-hidden-accessible"
+                              onChange={(e) => {
+                                this.TraerPilaresPorModelos("", this.state.SubArea, "")
+                                this.inputChange(e.target)
+                              }}                              
                               data-control="select2"
                               data-placeholder="Select an option"
                               data-select2-id="select2-data-7-njhs"
@@ -2208,74 +2672,75 @@ class Componentes extends React.Component<IComponentesProps, any>{
                               <option data-select2-id="select2-data-9-da1c">
                                 Seleccionar
                               </option>
-
-                              {this.state.SubAreasFilial.map((e: any) => (
-                                <option value={e.SubAreas}>
-                                  {e.SubAreas}
-                                </option>
-                              ))}
+               
                             </select>
-                          </div>
+                          
                         ) : null}
+                        </div>
 
-                        {this.state.Pilar &&
-                          this.state.Pilar.length > 0 ? (
+                        
                           <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                             <label className="form-label required">
                               Pilar
                             </label>
+
                             <select
                               disabled={this.props.Desabilitado}
-                              name="pilar"
-                              value={this.state.pilarSelected}
-                              onChange={(e) => {
-                                this.inputChange(e.target)
-                                // this.getDriversByPilar(e.target.value)
-                              }}
+                              name="Pilar"
+                              value={this.state.Pilar}
                               className="form-select select2-hidden-accessible"
+                              onChange={(e) => {
+                                this.TraerPilaresPorModelos("", this.state.Pilar, "")
+                                this.inputChange(e.target)
+                              }}
                               data-control="select2"
                               data-placeholder="Select an option"
                               data-select2-id="select2-data-7-njhs"
+
                               aria-hidden="true"
                             >
+                              <option hidden selected>{this.state.Pilar}</option>
+                              <option data-select2-id="select2-data-3-efwm"></option>
+                              {/* {this.state.pilares.map((e: any, i: any) => (
+                                <option key={i} value={e.Pilar}>
+                                  {e.Pilar}
+                                </option>
 
-                              {this.state.pilares.map((e: any) => (
-                                <option value={e.Id}>{e.Title}</option>
-
-                              ))}
+                              ))} */}
                             </select>
-
                           </div>
-                        ) : null}
+                      
 
-                        {this.state.Driver && this.state.Driver.length > 0 ? (
+                        
                           <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                             <label className="form-label required">
                               Driver
                             </label>
-                            {
-                              this.props.match.params.IdMecanismo === undefined ?
-
+                            
                                 <select
                                   disabled={this.props.Desabilitado}
                                   name="driver"
                                   value={this.state.Driver}
-                                  onChange={(e) => {
-                                    this.inputChange(e.target)
-                                    this.consultarDriver(e.target.value)
-                                  }}
                                   className="form-select select2-hidden-accessible"
+                                  onChange={(e) => {
+                                    this.TraerPilaresPorModelos("", this.state.Driver, "")
+                                    this.inputChange(e.target)
+                                    // this.consultarDriver(e.target.value)
+                                  }}
                                   data-control="select2"
                                   data-placeholder="Select an option"
-                                  data-select2-id="select2-data-7-njhs"
+                                  data-select2-id="select2-data-1-k7cj"
 
-                                  aria-hidden="true"
-                                >
-                                  <option data-select2-id="select2-data-9-da1c" value="0">
-                                    seleccionar...
-                                  </option>
+                                  aria-hidden="true">
+
                                   <option hidden selected>{this.state.Driver}</option>
-                                  {this.state.pilar == "No Aplica" ?
+                                  <option data-select2-id="select2-data-3-efwm"></option>
+                                  {this.state.drivers.map((e: any, i: any) => (
+                                    <option key={i} value={e.Driver}>
+                                      {e.Driver}
+                                    </option>
+                                  ))}
+                                  {/* {this.state.pilar == "No Aplica" ?
                                     <option
                                       data-select2-id="select2-data-9-da1c"
                                       value="10"
@@ -2283,23 +2748,15 @@ class Componentes extends React.Component<IComponentesProps, any>{
                                       No aplica
                                     </option> : null}
 
-                                  {this.state.drivers.map((e: any) => (
-                                    <option value={e.Title}>{e.Title}</option>
-                                  ))}
-
+                                  {this.state.drivers.map((e: any, i: any) => (
+                                    <option key={i} value={e.Driver}>
+                                      {e.Driver}
+                                      </option>
+                                  ))} */}
                                 </select>
-                                :
-                                <input placeholder='.'
-                                  value={this.state.driver1}
-                                  className="form-control"
-
-                                  type="text"
-
-                                />
-                            }
-
+                                
                           </div>
-                        ) : null}
+                       
 
                         {this.state.pilar == 'No aplica' ? (
                           <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
@@ -2307,7 +2764,9 @@ class Componentes extends React.Component<IComponentesProps, any>{
                               Driver
                             </label>
 
-                            <select name="driver" value={this.state.Driver}
+                            <select 
+                              name="driver" 
+                              value={this.state.Driver}
                               onChange={(e) => {
                                 this.inputChange(e.target)
                               }}
@@ -2334,9 +2793,11 @@ class Componentes extends React.Component<IComponentesProps, any>{
                           </div>
                         ) : null}
 
-                        <div className="row mb-5 contenform" id="btnMecanismos" >
-                          <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 marginBottom">
-                            <div className="d-flex">
+                        {/* <div className="row mb-5 contenform" id="btnMecanismos" > */}
+                          {/* <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom"> */}
+                            <br />
+                            <br />
+                            <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                               <span className="form-check">
 
                                 <input placeholder='.'
@@ -2352,11 +2813,11 @@ class Componentes extends React.Component<IComponentesProps, any>{
                                   }}
                                 />
 
+                                <label className="form-check-label pe-10 fs-5" htmlFor="flexRadioDefault">
+                                  Mecanismo del driver
+                                </label>
                               </span>
-                              <label className="form-check-label pe-10 fs-5" htmlFor="flexRadioDefault">
-                                Mecanismo del driver
-                              </label>
-
+                              <br />
                               <span className="form-check">
 
                                 <input placeholder='.'
@@ -2372,17 +2833,16 @@ class Componentes extends React.Component<IComponentesProps, any>{
                                   }}
                                 />
 
+                                <label className="form-check-label pe-10 fs-5" htmlFor="flexRadioDefault">
+                                  Otro Mecanismo Operacional
+                                </label>
                               </span>
-                              <label className="form-check-label pe-10 fs-5" htmlFor="flexRadioDefault">
-                                Otro Mecanismo Operacional
-                              </label>
                             </div>
-                          </div>
-                        </div>
+                          {/* </div> */}
+                        {/* </div> */}
 
-                        <div className="row">
-                          <div className="col-lg-6 col-md-4 col-xl-6 col-xxl-6 marginBottom">
-
+                        
+                          <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                             <label className="form-label required">
                               Nombre actual del Mecanismo
                             </label>
@@ -2405,12 +2865,12 @@ class Componentes extends React.Component<IComponentesProps, any>{
 
                             <select
                               disabled={this.props.Desabilitado}
-                              name="mecanismo"
-                              value={this.state.NombreMecanismoSelected}
+                              name="mecanismoLocal"
+                              value={this.state.NombreMecanismoLocal}
+                              className="form-select select2-hidden-accessible"
                               onChange={(e) => {
                                 this.inputChange(e.target)
                               }}
-                              className="form-select select2-hidden-accessible"
                               data-control="select2"
                               data-placeholder="Select an option"
                               data-select2-id="select2-data-7-njhs"
@@ -2430,26 +2890,42 @@ class Componentes extends React.Component<IComponentesProps, any>{
                             </select>
                           </div>
 
-                        </div>
+                        
                         <div className='row mt-2'>
                           <h3>Información del mecanismo a publicar</h3>
                           <div className="col-6">
                             <label className="form-label required">
                               Nombre del Mecanismo
                             </label>
-                            {/* <input name="nombreMecanismoPublicar"
-                              type="text"
+                            <select
                               disabled={this.props.Desabilitado}
-                              className='form-control'
-                              value={this.state.NombreMecanismoLocal}
+                              name="mecanismo"
+                              value={this.state.NombreMecanismoSelected}
                               onChange={(e) => {
                                 this.inputChange(e.target)
-                              }} /> */}
-
-
+                              }}
+                              className="form-select select2-hidden-accessible"
+                              data-control="select2"
+                              data-placeholder="Select an option"
+                              data-select2-id="select2-data-1-k7cj"
+                              aria-hidden="true"
+                            >
+                              <option value="">Seleccionar...</option>
+                              <option value={this.state.NombreMecanismo}>{this.state.NombreMecanismo}</option>
+                              {this.state.mecanismos && this.state.mecanismos.length > 0 ?
+                                this.state.mecanismos.map((mecanismo: any, index: any) => {
+                                  return (
+                                    <option key={index} value={mecanismo.NombreMecanismo}>
+                                      {mecanismo.NombreMecanismo}
+                                    </option>
+                                  )
+                                }) : null
+                              }
+                            </select>
 
                           </div>
-                          <div className="col-6">
+
+                          <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                             <label className="form-label required">
                               Tipo de Mecanismo
                             </label>
@@ -2461,7 +2937,10 @@ class Componentes extends React.Component<IComponentesProps, any>{
                               // onChange={(e) => {
                               //   this.CambioTipoMecanismo(e.target,"Solucion")
                               // }}
-                              className="form-select select2-hidden-accessible" data-control="select2" data-placeholder="Select an option"  data-select2-id="select2-data-7-njhs"
+                              className="form-select select2-hidden-accessible" 
+                              data-control="select2" 
+                              data-placeholder="Select an option"  
+                              data-select2-id="select2-data-7-njhs"
 
                             >
                               <option
@@ -2710,7 +3189,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                               Plantas
                             </label>
 
-                            {this.state.AplicaPlanta && this.state.plantas.length > 0 ? (
+                            {this.state.AplicaPlanta && this.state.AplicaPlanta.length > 0 ? (
                               <select
                                 disabled={this.props.Desabilitado}
                                 //onChange={(e) => { this.setState({ planta: e.target.value }) }}
@@ -4043,23 +4522,36 @@ class Componentes extends React.Component<IComponentesProps, any>{
 
             /* Pantalla enviar ajustes del formulario */
             this.state.boton == "enviarajustes" ?
-              <div className="flex-column current">
+              <div className="flex-column current bordernone">
                 <div className="row mb-5">
                   <div className="card-title flex-column header-title-stepper rounded-top p-4 mb-5">
                     <h3 className="text-primary">
-                      Enviar ajustes
+                      {this.state.TituloEnviarAjustes}
                     </h3>
                   </div>
-                  <p className='ptextajustes'>Indique a continuacion las observaciones indentificadas en la revision del mecanismo que deben ser ajustadas por el solicitante antes de pasar a publicación</p>
+                  <p className='ptextajustes'>{this.state.TextoEnviarAjustes}</p>
                 </div>
 
                 <div className="row mb-5 contenformajustes">
 
                   <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 marginBottom">
                     <label className="form-label required " >
-                      Observaciones:
+                      {this.state.TextoObservaciones}
                     </label>
-                    
+                    <br />
+                  
+                    <textarea
+                      className= "textarea1" 
+                      name="Envarajustes" 
+                      id=""
+                      placeholder='ingrese sus comentarios aquí'
+                      >
+                        
+
+                    </textarea>
+                        {/* <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                         <path d="M24.8497 3.14974C23.3141 1.61414 20.8244 1.61415 19.2889 3.14976L4.5025 17.9367C4.06211 18.3771 3.74255 18.9235 3.57462 19.5233L2.02779 25.0477C1.95474 25.3086 2.02809 25.5886 2.21968 25.7802C2.41127 25.9718 2.69131 26.0452 2.95223 25.9721L8.47647 24.4254C9.07632 24.2575 9.62281 23.9379 10.0633 23.4974L24.8497 8.71037C26.3852 7.17482 26.3852 4.68527 24.8497 3.14974ZM20.3496 4.2104C21.2993 3.2606 22.8392 3.26059 23.789 4.21039C24.7387 5.16014 24.7387 6.69997 23.789 7.64973L22.2498 9.18905L18.8104 5.74965L20.3496 4.2104ZM17.7497 6.81034L21.1891 10.2497L9.00259 22.4367C8.74429 22.6951 8.42382 22.8825 8.07205 22.981L3.83174 24.1682L5.01906 19.9277C5.11754 19.576 5.30493 19.2556 5.56318 18.9974L17.7497 6.81034Z" fill="#345E9E"/>
+                        </svg> */}
                     <div>
                       <p id="Contadordescripajustes">{this.state.CantidadCaracteres}/5000</p>
                     </div>
@@ -4109,19 +4601,27 @@ class Componentes extends React.Component<IComponentesProps, any>{
                   <div className="row mb-5">
                     <div className="card-title flex-column header-title-stepper rounded-top p-4 mb-5">
                       <h3 className="text-primary">
-                        Responder ajustes
+                        {this.state.TituloResponderAjustes}
                       </h3>
                     </div>
-                    <p className='ptextajustes'>Responda las observaciones realizadas por el Revisor. Puede modificar el texto a continuación</p>
+                    <p className='ptextajustes'>{this.state.TextoResponderAjustes}</p>
                   </div>
 
                   <div className="row mb-5 contenformajustes">
 
                     <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 marginBottom">
                       <label className="form-label required " >
-                        Observaciones del Revisor GC
+                        {this.state.TextoComentariosRevisor}
                       </label>
+                      <textarea
+                      className= "textarea1" 
+                      name="Envarajustes" 
+                      id=""
+                      placeholder='ingrese sus comentarios aquí'
+                      >
+                        
 
+                    </textarea>
                      
                       <div>
                         <p id="Contadordescripajustes">{this.state.CantidadCaracteres}/5000</p>
@@ -4163,18 +4663,26 @@ class Componentes extends React.Component<IComponentesProps, any>{
                     <div className="row mb-5">
                       <div className="card-title flex-column header-title-stepper rounded-top p-4 mb-5">
                         <h3 className="text-primary">
-                          Cancelar solicitud
+                          {this.state.TituloCancelarsolicitud}
                         </h3>
                       </div>
-                      <p className='ptextajustes'>Al cancelar esta solicitud se finaliza por completo el proceso. En caso de remotar la solicitud, deberá iniciarla nuevamente</p>
+                      <p className='ptextajustes'>{this.state.TextoCancelarsolicitud}</p>
                     </div>
 
                     <div className="row mb-5 contenformajustes">
 
                       <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 marginBottom">
                         <label className="form-label required " >
-                          Comentarios
+                          {this.state.TextoComentarios}
                         </label>
+                        <textarea
+                          className= "textarea1" 
+                          name="Envarajustes" 
+                          id=""
+                          placeholder='ingrese sus comentarios aquí'
+                          >
+                            
+                        </textarea>
                         <div>
                           <p id="Contadordescripajustes">{this.state.CantidadCaracteres}/1000</p>
                         </div>
@@ -4201,14 +4709,14 @@ class Componentes extends React.Component<IComponentesProps, any>{
                         <div className="row mb-5">
                           <div className="card-title flex-column header-title-stepper rounded-top p-4 mb-5">
                             <h3 className="text-primary">
-                              Enviar a publicacion
+                              {this.state.TituloEnviarAPublicacion}
                             </h3>
                           </div>
                           <label className="form-label required " >
-                            Asignar mecanismo
+                           {this.state.TextoEnviarAPublicacionCreacion1}
                           </label>
 
-                        <p className='ptextajustes'>Previo a enviar a publicacion, aisgne el tipo de mecanismo de cada uno de los documentos que va a publicar.</p>
+                        <p className='ptextajustes'>{this.state.TextoEnviarAPublicacionCreacion2}</p>
                       </div>
                       <div>
                         {this.state.documentosMecanismo &&
@@ -4278,7 +4786,15 @@ class Componentes extends React.Component<IComponentesProps, any>{
                         <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 marginBottom">
                           <label className="form-label required " >
                             Comentarios
-                          </label>                          
+                          </label>
+                          <textarea
+                            className= "textarea1" 
+                            name="Envarajustes" 
+                            id=""
+                            placeholder='ingrese sus comentarios aquí'
+                            >
+                              
+                          </textarea>                          
                           <div>
                             <p id="Contadordescripajustes">{this.state.CantidadCaracteres}/1000</p>
                           </div>
@@ -4326,7 +4842,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                       <div className="row mb-5">
                         <div className="card-title flex-column header-title-stepper rounded-top p-4 mb-5">
                           <h3 className="text-primary">
-                            Activar flujos de aprobacion
+                            {this.state.TituloActivarAprobación}
                           </h3>
                         </div>
                       </div>    
@@ -4341,7 +4857,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                             })
                           }/>
                           <label className="form-label" style={{ marginLeft: "7px" }}>
-                            Al activar este check confirmo que los documentos a publicar están completos, con la nomenclatura correcta y la metadata asignada exitosamente.
+                          {this.state.TextoActivarAprobación}
                           </label> 
 
                           <div className='d-flex flex-stack Componentesajustes'>
@@ -4381,7 +4897,15 @@ class Componentes extends React.Component<IComponentesProps, any>{
                           <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 marginBottom">
                             <label className="form-label required " >
                               Comentarios
-                            </label>                            
+                            </label>
+                            <textarea
+                              className= "textarea1" 
+                              name="Envarajustes" 
+                              id=""
+                              placeholder='ingrese sus comentarios aquí'
+                              >
+                                
+                            </textarea>                            
                             <div>
                               <p id="Contadordescripajustes">{this.state.CantidadCaracteres}/1000</p>
                             </div>
@@ -4420,6 +4944,14 @@ class Componentes extends React.Component<IComponentesProps, any>{
                             <label className="form-label required " >
                               Comentarios
                             </label>
+                            <textarea
+                              className= "textarea1" 
+                              name="Envarajustes" 
+                              id=""
+                              placeholder='ingrese sus comentarios aquí'
+                              >
+                                
+                            </textarea>
                             
                             <div>
                               <p id="Contadordescripajustes">{this.state.CantidadCaracteres}/1000</p>

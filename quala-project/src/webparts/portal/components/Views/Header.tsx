@@ -1,9 +1,11 @@
 import * as React from "react";
-import SVGIconComponent from "../Util/SVGIcon";
+import { useState } from 'react';
 import ModelosArea from "./ModelosArea";
 import InformacionGC from "./InformacionGC";
 import MacroProcesos from "./MacroProcesos";
-
+import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 
 
 interface Props {
@@ -27,9 +29,30 @@ interface Props {
  }
 
 
-const Header: React.FC<Props> = ({ titulo, urlSiteSubsitio, sigla,sitioPrincpal,sitio, paisA, Paises,context,UserId,Direcciones,SubAreas,Areas,Gestor,infoMenus, urlDesarrollo, urlNegocio, macroProcesos }) => {    
-   return <div id="kt_header" className="header"        
-    style={{backgroundImage: `url(${sitioPrincpal + "/SiteAssets/" + sigla + "/Header.png"})`,}}
+ const Header: React.FC<Props> = ({ titulo, urlSiteSubsitio, sigla,sitioPrincpal,sitio, paisA, Paises,context,UserId,Direcciones,SubAreas,Areas,Gestor,infoMenus, urlDesarrollo, urlNegocio, macroProcesos }) => {    
+ 
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event:any) => {
+      setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+      setAnchorEl(null);
+    };
+
+    const handleMenuItemClick = (url:any) => {
+      if (url.startsWith("http://") || url.startsWith("https://")) {
+        window.open(url, "_blank");
+      } else {
+        
+      }
+      handleClose();
+    };
+  
+  return <div id="kt_header" className="header"        
+    style={{backgroundImage: `url(${sitioPrincpal + "/ActivosGC/" + sigla + "/Header.png"})`,}}
     data-kt-sticky="true" data-kt-sticky-name="header" data-kt-sticky-offset="{default: '200px', lg: '300px'}">
     
     <div className="container-xxl d-flex flex-grow-1 flex-stack" style={{ marginTop: "-20px" }}>
@@ -54,8 +77,8 @@ const Header: React.FC<Props> = ({ titulo, urlSiteSubsitio, sigla,sitioPrincpal,
               <span>
                 <img
                   alt="Logo"
-                  src= {sitioPrincpal + "/SiteAssets/Root/Quala_Logo_Home.png"}
-                  className="h-45px h-lg-60px" title="."/>
+                  src= {sitioPrincpal + "/ActivosGC/Root/Quala_Logo_Home.png"}
+                  className="h-45px h-lg-60px" title=""/>
               </span>   
             </a>
      
@@ -64,32 +87,40 @@ const Header: React.FC<Props> = ({ titulo, urlSiteSubsitio, sigla,sitioPrincpal,
         <div id="alingTittle" className="col">
           <div className="ms-5 ms-md-10 me-3">
             <h1 className="d-flex text-dark fw-bolder my-1 fs-1 ffspecial">
-              {titulo}
+              <a href={urlSiteSubsitio}>  
+                {titulo}
+              </a>
             </h1>
           </div>
         
           <nav className="navbar navbar-expand-lg">
             <ul className="navbar-nav">
               <li className="nav-item dropdown text-decoration1">
-                {paisA}
-                <ul className="dropdown-menu">
-                  {Paises.map((e: any) => (
-                    <li className="nav-item">{e.Nombre_x0020_Pais}</li>
-                  ))}
-                </ul>
-                
-                <SVGIconComponent iconType="M1" />
-                
-                <ul className="dropdown-menu">
-                  {Paises.map((e: any) => (
-                    <li className="nav-item dropdownSubMenu">
-                      <a href={e.Url_x0020_Sitio.Url}
-                        className="fw-bold d-block fs-6 text-gray-600 text-hover-primary mt-2">
-                        {e.Nombre_x0020_Pais}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
+                <div onMouseOver={handleClick}>
+                  {paisA}
+                  <ArrowDropDown />
+                </div>
+
+                <Menu
+                id="simple-menu"
+                className="text-decoration1"
+                anchorEl={anchorEl}
+                keepMounted
+                open={open}
+                PaperProps={
+                  {
+                    onMouseLeave: handleClose,
+                  }
+                }
+                onClose={handleClose}>
+
+                {Paises.map((e:any, index:any) => (
+                  <MenuItem key={index} onClick={() => handleMenuItemClick(e.Url_x0020_Sitio.Url)}>
+                    {e.Nombre_x0020_Pais}
+                  </MenuItem>
+                ))}
+                </Menu>                                                    
+                                             
               </li>
               <li className="nav-item dropdown text-decoration1">
                 <ModelosArea 
@@ -103,10 +134,7 @@ const Header: React.FC<Props> = ({ titulo, urlSiteSubsitio, sigla,sitioPrincpal,
                 />                               
               </li>
               <li className="nav-item dropdown text-decoration1">
-                <MacroProcesos 
-                  macroProcesos={macroProcesos}
-                  context={context}
-                />               
+                {macroProcesos.length > 0 ? (<MacroProcesos macroProcesos={macroProcesos} context={context}/>) : null }           
               </li>
             </ul>
           </nav>

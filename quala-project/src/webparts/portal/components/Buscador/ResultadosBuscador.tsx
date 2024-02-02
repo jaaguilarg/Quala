@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import Select from 'react-select'
 import { withRouter } from 'react-router-dom';
 import { PNP } from '../Util/util';
 import { Pagination } from "@pnp/spfx-controls-react/lib/pagination";
@@ -9,12 +8,43 @@ import FilterTodos from './FilterTodos';
 import 'animate.css';
 import LoaderComponent from '../Views/LoaderComponent';
 import { Modal } from 'office-ui-fabric-react/lib/Modal';
-import Pilares from '../Modelos/Pilares';
+import ModelMecanismo from '../Views/ModelMecanismo';
 import ModelComentar from '../Views/ModelComentar';
+import ExtenderVigencia from '../Formulario/ExtenderVigencia';
+import CrearContenido from '../Formulario/CrearContenido';
+import Box from '@mui/material/Box';
+import Grid from '@mui/material/Unstable_Grid2';
+import FormLabel from '@mui/material/FormLabel';
+import { styled } from '@mui/material/styles';
+import Paper from '@mui/material/Paper';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+import FormGroup from '@mui/material/FormGroup';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import InputAdornment from '@mui/material/InputAdornment';
+import SearchIcon from '@mui/icons-material/Search';
+
+
 
 const slice: any = require('lodash/slice');
 
+const Item = styled(Paper)(({ theme }) => ({
+    backgroundColor: theme.palette.mode === 'dark' ? '##EEF2F3' : '#EEF2F3',
+    ...theme.typography.body2,
+    padding: theme.spacing(1),
+    textAlign: 'center',
+    color: theme.palette.text.secondary,
+    marginBottom: '5px'
+}));
+
+interface IChecksInicial {
+    [key: string]: boolean;
+}
+
 export interface IResultadosBuscadorProps {
+    location: any;
+    match:any;
     webPartContext: any;
     userId: any;
     urlSite: any;
@@ -26,18 +56,25 @@ export interface IResultadosBuscadorProps {
     IsSiteAdmin: any;
     Sigla: string;
     paises: [];
+    parametros: {ID: any; Llave: string; Valor: string; Descripcion: string; } [];
+    Direcciones: any;
+    Areas: any;
+    SubAreas: any;
+    terms: [];
 }
 
 class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> {
 
+    //#region Lista de variables
     public pnp: PNP;
     public urlSite: '';
-    public iconPath: any;
-    public paises: any[] = [];
+    public iconPath: any;    
     public todos: any[] = [];
     public procesos: any[] = [];
     public plantas: any[] = [];
 
+
+    public filtroItem: string[] = [];
     public filtroPais: string[] = [];
     public filtroDireccion: string[] = [];
     public filtroArea: string[] = [];
@@ -59,14 +96,49 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
     public filtros: string[] = [];
     public filterPlantas: string[] = [];
 
-    
+    public mapeoCampos = [
+        { jsonParam: "Direccion", todosTitle: "Dirección" },
+        { jsonParam: "Area", todosTitle: "Área" },
+        { jsonParam: "Subarea", todosTitle: "Subárea" },
+        { jsonParam: "Tipomecanismo", todosTitle: "Tipo de mecanismo" },
+        { jsonParam: "Planta", todosTitle: "Planta" },
+        { jsonParam: "Proceso", todosTitle: "Proceso" },
+        { jsonParam: "Categoria", todosTitle: "Categoría" },]
+       
+    //#endregion
+
 
     constructor(props: any) {
         super(props);
-        this.pnp = new PNP(this.props.webPartContext);        
+        this.pnp = new PNP(this.props.webPartContext);  
+        
+        this.TablaModelo = this.TablaModelo.bind(this);
+        this.SetEstadoTablaModelo = this.SetEstadoTablaModelo.bind(this);
+        this.closeModalMecan = this.closeModalMecan.bind(this); 
+        this.procesarBusquedasSecuenciales = this.procesarBusquedasSecuenciales.bind(this);
+        this.onInputChange = this.onInputChange.bind(this);
+        this.onInputPress = this.onInputPress.bind(this);
+        this.getDataFiltered = this.getDataFiltered.bind(this);       
+
+        const checksInicialPaises:IChecksInicial = {};
+               
+        this.props.paises.forEach((pais:any) => {
+           if(this.props.Sigla == pais.Sigla)
+           {
+            checksInicialPaises[pais.Sigla] = true;
+           }else{
+            checksInicialPaises[pais.Sigla] = false;
+           }
+        });
 
         this.state = {
+            filters: [],
+            checkSeguridad: false,
+            checkPaises:checksInicialPaises,
+            nivelCarpeta: 'Publico',
             search: '',
+            totalRow: 0,
+            expanded: false,
             urlSite: '',
             urlSubSite: '',
             paisActual: '',
@@ -75,14 +147,12 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
             clean: false,
             loading: false,
             IsApros: false,
-            IsRolGestor: false,
             Plantas: [],
             Refiners: [],
             searchData: [],
-            todosGrupo: [],
-            grupoPaises: [],
-            procesosGrupo: [],
-            linkMapaMecanismo: '',
+            filterSearchData:[],
+            todosGrupo: [],          
+            procesosGrupo: [],            
             partialSearchingResults: [],
             NombreMecanismo: '',
             pagedItems: [],
@@ -92,7 +162,10 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
             isLoading: true,
             showModal: false,
             showModalDocument: false,
+            showModalExtender: false,
+            showModalCrear: false,
             idMecanismo: null,
+            estadoTablaModelo: false,
             pilaresProps: {
                 direccion: "",
                 IdVisor: "",
@@ -101,7 +174,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                 NombreMecanismo: "",
                 Seguridad: "",
                 Acceso: "",
-                Modal: true,                
+                Modal: true,                                
               },
             CommentProps: {
                 idMecanismo: "",
@@ -112,112 +185,66 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                 Area: "",
                 Subarea: "",
             },
+            ExtenderProps: { mecanismoId: ""},
+            CrearProps:{
+                Acceso: "",
+                opcion: "",
+                IdMecanismo: ""
+            },
               sitioLibrary: this.props.urlSite == this.props.urlPrimerSitio ? this.props.urlSite + "/" + this.props.Sigla + "/" : this.props.urlPrimerSitio + "/",
               sitioLocal: this.props.urlSite == this.props.urlPrimerSitio ? this.props.urlSite + "/" + this.props.Sigla : this.props.urlPrimerSitio 
 
         }
+
+        this.toggleExpanded = this.toggleExpanded.bind(this);
+    }
+          
+    toggleExpanded() {
+        this.setState((prevState:any) => ({ expanded: !prevState.expanded }));
+    }
+    
+    public TablaModelo()
+    {
+        this.setState({estadoTablaModelo: true});
     }
 
-    public componentDidMount(): void {
-       
-        
-        this.setState({ paisActual: this.props.paisActual}, () => {            
-            this.consultarModelo();
+    public SetEstadoTablaModelo()
+    {
+        this.setState({estadoTablaModelo: !this.state.estadoTablaModelo});
+    }
+
+    public componentDidMount(): void {                
+
+        this.setState({ paisActual: this.props.paisActual}, () => {                        
             this.getQueryUrl();
 
         });
         
         this.setState((state: any, props: any) => {
             state.showTab = props.show;           
-        }, () => {
-            this.getPaises();
         });
     }
 
-    public componentDidUpdate(prevProps: Readonly<IResultadosBuscadorProps>, prevState: Readonly<any>, snapshot?: any): void {
+    public componentDidUpdate(prevProps:any, prevState: Readonly<any>, snapshot?: any): void {                
 
+        if (this.props.location !== prevProps.location) {            
+            this.getQueryUrl();
+        }
+        
         if (this.state.searchData != prevState.searchData) {
             this._onPageUpdate();            
             this.setState({ currentPage: 1 });
         }       
+
+
     }
-
-    // Función que consulta el tipo de rol del usuario
-    public getGroups(Id: any): void {
-
-        this.pnp.getGroupsByUserId(Id)
-            .then(resGroups => {
-                
-                let gestor = resGroups.filter((x: { LoginName: any }) => x.LoginName == 'Gestores_' + this.props.paisActual);
-
-                let isGestor = gestor.length > 0 ? true : false;
-
-                this.setState({
-                    IsRolGestor: isGestor,
-                });
-
-            });
-    }
-
+   
     // Función que consulta el contexto del sitio y realiza la busqueda general
-    public async loadContextSite() {     
-        console.log(this.state.search);  
-        await this.pnp.searchInLibrary(this.state.sitioLibrary,this.state.search,this.props.Sigla,"loadcontext")
-            .then(res => {                                         
-                this.setState({                   
-                    Refiners: res.data,
-                    searchData: res,
-                    urlSite: this.props.urlSite,
-                    urlSubSite: this.props.urlPrimerSitio
-                }, () => {
-                    this.onFilters(this.state.Refiners);
-                    this.getGroups(this.props.userId);                    
-                });
-            });
-        
-               
+    public async loadContextSite() {             
+        this.getDataFiltered()                 
     }
-
-    // Función que consulta el modelo de la filial
-    public consultarModelo(): void {
-
-        this.pnp.getListItems(
-            "Modelos Local",
-            ["*"],
-            "",
-            ""           
-        ).then(items => {
-           
-            let linkMapa = items.filter((x: { Title: any }) => x.Title == "POM")[0];
-            
-            if(linkMapa == null)
-            {
-                linkMapa = items[0];
-            }            
-            
-            this.setState({ linkMapaMecanismo: linkMapa.Vinculo_x0020_Mapa_x0020_Mecanis})
-        });
-    }
-
-    // Función que cunsulta los paises
-    public getPaises(): void {
-        try{
-            let paises = this.props.paises.filter((x: { Title: any }) => x.Title != this.state.paisActual);
-
-            paises.forEach((item: any, index: any) => {
-                this.paises.push({ valor: item.Nombre_x0020_Pais, LinkSitio: item.Url_x0020_Sitio });
-            });
-
-            this.setState({
-                grupoPaises: this.paises
-            });       
-        }
-        catch
-        {
-
-        }
-    }   
-
+    
+    //Función para abrir modal de pilares
     openModalWithProps = (props:any) => {
         this.setState({
           showModal: true,
@@ -225,6 +252,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
         });
     };
 
+    //funcion para abrir modal de Comentarios
     openModalComment = (_idMecanismo:any,nombremeca:any,direccion:any,area:any,subarea:any,iddocumento:any,nombredocumento:any) => {
         
         const commentprops = {
@@ -243,45 +271,186 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
           });
     };
 
+    //funcion para abrir modal de Extender Vigencia
+    openModalExtender =( _idMecanismo:any) => {
+        const mecanismoProp = {
+            mecanismoId: _idMecanismo
+        };
+        
+        this.setState({
+            ExtenderProps: mecanismoProp,
+            showModalExtender: true 
+        });
+    }
+
+    //funcion para abrir modal de crear contenido
+    openModalCrear =(Acceso:any, opcion:any, IdMecanismo:any) => {
+        const crearProps = {
+            Acceso: Acceso,
+            opcion: opcion,
+            IdMecanismo: IdMecanismo
+        }
+
+        this.setState({
+            CrearProps: crearProps,
+            showModalCrear: true
+        })
+    }
+
+    
     closeModalComment = () => {
         this.setState({
             showModalDocument: false
         });
-    };
-  
-    private async getMecanismo(direccion: string, area: string, seguridad: string, id: any) {
+    }
+
+    closeModalMecan = () => 
+    {
+        this.setState({showModal: false});
+    }
+
+    handleCheckboxChange = (pais:any) => {      
+        
+        this.setState((prevState:any) => ({
+            checkPaises: {
+                ...prevState.checkPaises,
+                [pais]: !prevState.checkPaises[pais]
+            }
+        }), () => {
+            this.getDataFiltered();
+        }
+        );        
+        
+    }
+
+    async procesarBusquedasSecuenciales(refiners:any) {
+
+        const busquedas = Object.keys(this.state.checkPaises)        
+        .filter(key => this.state.checkPaises[key]) 
+        .map(key => {
+            console.log(key);                      
+            const terminoBusqueda = this.props.urlPrimerSitio + "/" + key + "/"; 
+            return this.pnp.searchInLibraryII(terminoBusqueda, this.state.search, this.props.Sigla, "getdatafilter",refiners);
+        });
+
+        const resultados = await Promise.all(busquedas);
+                     
+        const dataAcumulada:[] = resultados.reduce((acumulado, res) => acumulado.concat(res.data), []);
+
+        dataAcumulada.sort((a:any,b:any) => parseFloat(b.Rank) - parseFloat(a.Rank));       
+
+        this.setState({
+            searchData: dataAcumulada,
+            filterSearchData: dataAcumulada,
+            count: true,
+            currentPage: 1,
+            isLoading: false,
+            totalRow: dataAcumulada.length
+        }, () => {
+            this._onPageUpdate();  
+            this.onFiltersUpdate(dataAcumulada);            
+        });
+        
+    }
+
+    contarPropiedades(arr:any, propiedad:any) {
+        return arr.reduce((acumulador:any, item:any) => {            
+            let valor = item[propiedad];
+    
+            if (!valor) {
+                valor = 'Indefinido';
+            }
+                
+            if (acumulador[valor]) {
+                acumulador[valor] += 1;
+            } else {
+                acumulador[valor] = 1;
+            }
+    
+            return acumulador;
+        }, {});
+    }
+
+    obtenerCorrespondencia(titulo:any, parametro:any) {
+        const mapeo = this.mapeoCampos.find(m => m.todosTitle === titulo || m.jsonParam === parametro);
+    
+        if (mapeo) {
+            if (titulo) {
+                return mapeo.jsonParam;
+            } else if (parametro) {
+                return mapeo.todosTitle;
+            }
+        } else {
+            return 'No se encontró correspondencia';
+        }
+
+
+    }
+          
+    private async getMecanismo(direccion: string, area: string, seguridad: string, id: any,pais: string) {
         try {                                               
+
+            const vPais:any = this.props.paises.filter((x:any)=> x.Nombre_x0020_Pais == pais);
+
+
             const res = await this.pnp.getListItems(
                 "Mecanismos Local",
                 ["Nombre_x0020_Mecanismo_x0020_Loc"],
                 `ID eq '${id}'`,
-                "","",0,this.props.Sigla
+                "","",0,vPais[0].Sigla
             );
-    
+                                        
             if (res && res.length > 0) {
-                const { Nombre_x0020_Mecanismo_x0020_Loc } = res[0];
-                const modelo = area.split(' ').join('_');
+                const { Nombre_x0020_Mecanismo_x0020_Loc } = res[0];               
               
-                const pilaresProps = {
-                  Direccion: direccion,
-                  IdVisor: modelo,
-                  Modelo: `Modelo ${area}`,
-                  NumeroPilar: "1",
-                  NombreMecanismo: Nombre_x0020_Mecanismo_x0020_Loc,
-                  Seguridad: seguridad,
-                  Acceso: "1"                          
-                };
+                const documentos = await this.pnp.ObtenerArchivosByMecanismoSigla(Nombre_x0020_Mecanismo_x0020_Loc, seguridad.split(";")[0], direccion, area, vPais[0].Sigla);
 
-                console.log(pilaresProps);
-              
-                this.openModalWithProps(pilaresProps);
-              }
+                if(documentos && documentos.length >0){
+                    const ficha = await this.pnp.consultarFichaForTableSigla(Nombre_x0020_Mecanismo_x0020_Loc,vPais[0].Sigla);
+
+                    if(ficha && ficha.length > 0)
+                    {
+                        
+                        const pilaresProps = {
+                            Direccion: direccion,
+                            IdVisor: area,
+                            Modelo: `Modelo ${area}`,
+                            NumeroPilar: "1",
+                            NombreMecanismo: Nombre_x0020_Mecanismo_x0020_Loc,
+                            Seguridad: seguridad.split(";")[0],
+                            Acceso: "1",                           
+                            Ficha: ficha,
+                            DocumentosMecanismo: documentos,
+                            UrlSitio: this.state.urlSitio,
+                            Subsitio: this.state.estadoSitio,
+                            NombreSubsitio: this.state.sitio,
+                            SitioSigla: this.props.Sigla                          
+                        };
+
+                        this.openModalWithProps(pilaresProps);
+                    }
+                    else
+                    {
+                        alert("La ficha no contiene Documentos");
+                    }
+
+                    
+                }
+                else
+                {
+                    alert("La ficha no contiene Documentos");
+                }
+            }
+            else
+            {
+                alert("La ficha no contiene información");
+            }                                              
 
         } catch (error) {
             console.error('Error en getMecanismo:', error);
         }
     }
-    
+        
     // Función que recibe el texto de búsqueda por medio de la URL
     public getQueryUrl(): void {
 
@@ -295,6 +464,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
 
         this.filtroPais = [];
         this.queryPais = '';
+    
 
         this.filtroDireccion = [];
         this.queryDireccion = '';
@@ -352,48 +522,23 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
     }
 
     // Función que asigna el texto de búsqueda
-    public onInputChange(e: any): void {
-
-        const {value} = e.target;
-     
-
-        this.setState({
-           search: e.target.value,
-        });
-
-        if (value && value.length > 0) {
-            this.setState({
-                search: value,
-                count: false,
-                clean: true
-            });
-            setTimeout(() => {
-                this.filterResultsOnChange();
-            }, 500);
-        } else {
-            this.onClickTab();
-            this.setState({                
-                count: false,
-                clean: false
-            }, () => {
-                this.loadContextSite();
-            });
-            this.onCleanPanel();
-        }
+    public onInputChange(e: any): void {                           
+            this.setState({search: e.target.value});          
     }
+         
 
     public onInputPress(e: any): void {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter') {           
             this.getDataFiltered();
         }
                   
     }
 
-    //Funcion para buscar coincidencias al ingresar texto en el buscador
-    private async filterResultsOnChange(refi?: String) {
-        
-        await this.pnp.searchInLibrary(this.state.sitioLibrary, this.state.search,this.props.Sigla,"filterresult")
+    /*Funcion para buscar coincidencias al ingresar texto en el buscador
+    private async filterResultsOnChange(refi?: String) {        
+        await this.pnp.searchInLibraryII(this.state.sitioLibrary, this.state.search,this.props.Sigla,"filterresult")
             .then(res => {
+               
 
                 let data = res.data.filter((f: any) => {
                     return f.FileName.replace(/ /g, '').toLowerCase().startsWith(this.state.search.toLowerCase()) || f.FileName.toLowerCase().includes(this.state.search.toLowerCase());
@@ -407,7 +552,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                     });
                 }
             });
-    }
+    }*/
 
     // Función que limpia el panel de previsualización de resultados
     public onCleanPanel() {
@@ -416,231 +561,66 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
             partialSearchingResults: []
         });
     }
-
+  
     // Función que establece los filtros resultados de la búsqueda
-    public onFilters(items: any) {
+    public onFiltersUpdate(items: any) {
 
         this.plantas = [];
-        this.filterPlantas = [];
-        
-        let paises = [];
-        
-        paises.push(items.map((item: any) => item.Pais).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        }));
+        this.filterPlantas = [];                  
                 
-                     
-        paises = paises.filter((a: any) => a !== undefined && a !== null);
+        let direcciones = this.props.terms.filter((x:any) => x.termSetName == "Dirección");
+        const conteoDirecciones = this.contarPropiedades(items, "Direccion");
+        
+        let areas = this.props.terms.filter((x:any) => x.termSetName == "Área");
+        const conteoAreas = this.contarPropiedades(items, "Area");        
+
+        let subareas = this.props.terms.filter((x:any) => x.termSetName == "Subárea");
+        const conteoSubarea = this.contarPropiedades(items, "Subarea");     
                 
-        let direcciones = items.map((item: any) => item.Direccion).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        });
-        direcciones = direcciones.filter((a: any) => a !== undefined && a !== null);
-
-        let areas = items.map((item: any) => item.Area).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        });
-        areas = areas.filter((a: any) => a !== undefined && a !== null);
-
-        let subareas = items.map((item: any) => item.Subarea).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        });
-        subareas = subareas.filter((a: any) => a !== undefined && a !== null);
-
-        let categorias = items.map((item: any) => item.Categoria).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        });
-        categorias = categorias.filter((a: any) => a !== undefined && a !== null);
-
-        let tipoMecanismos = items.map((item: any) => item.Tipomecanismo).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        });
-
-        tipoMecanismos = tipoMecanismos.filter((a: any) => a !== undefined && a !== null);
-
-        let plantas = items.map((item: any) => item.Planta).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        });
+        let categorias = this.props.terms.filter((x:any) => x.termSetName == "Categoría");
+        const conteoCategoria = this.contarPropiedades(items, "Categoria");   
         
-        plantas = plantas.filter((a: any) => a !== undefined && a !== null);
+        let tipoMecanismos = this.props.terms.filter((x:any) => x.termSetName == "Tipo de mecanismo");
+        const conteoTipomecanismo = this.contarPropiedades(items, "Tipomecanismo");   
 
-        let procesos = items.map((item: any) => item.Proceso).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        });
-        procesos = procesos.filter((a: any) => a !== undefined && a !== null);
-
+        let plantas = this.props.terms.filter((x:any) => x.termSetName == "Planta");
+        const conteoPlantas = this.contarPropiedades(items, "Planta");
         
-        this.todos[0] = { name: 'País', items: paises.map((i: any) => ({ Title: i, Check: this.state.paisActual == i? true: false })) };        
-        this.todos[1] = { name: 'Dirección', items: direcciones.map((i: any) => ({ Title: i, Check: false })) };
-        this.todos[2] = { name: 'Área', items: areas.map((i: any) => ({ Title: i, Check: false })) };
-        this.todos[3] = { name: 'Subárea', items: subareas.map((i: any) => ({ Title: i, Check: false })) };
-        
-        const processedItems = tipoMecanismos.map((i: string) => {
-            let segments = i.split(';');
-            return segments[segments.length - 1];
-        });
+        let procesos = this.props.terms.filter((x:any) => x.termSetName == "Proceso");
+        const conteoProcesos = this.contarPropiedades(items, "Proceso");               
+                
+        this.todos[0] = { name: 'Dirección', items: direcciones.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoDirecciones[i.label] || 0})) };
+        this.todos[1] = { name: 'Área', items: areas.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoAreas[i.label] || 0 })).filter(item => item.Count > 0) };
+        this.todos[2] = { name: 'Subárea', items: subareas.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoSubarea[i.label] || 0})).filter(item => item.Count > 0) };                      
+        this.todos[3] = {name: 'Tipo de mecanismo',items: tipoMecanismos.map((i:any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoTipomecanismo[i.label] || 0 })).filter(item => item.Count > 0) };                        
+        this.todos[4] = {name: 'Planta', items: plantas.map((i:any) => ({ Title: i.label,  Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoPlantas[i.label] || 0 })).filter(item => item.Count > 0) };                  
+        this.todos[5] = { name: 'Proceso', items: procesos.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoProcesos[i.label] || 0})).filter(item => item.Count > 0) };
+        this.todos[6] = { name: 'Categoría', items: categorias.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoCategoria[i.label] || 0})).filter(item => item.Count > 0) };       
 
-        const uniqueProcessedItems = processedItems.filter((value: any, index: number, self: any[]) => {
-            return self.indexOf(value) === index;
-        });
-
-        this.todos[4] = {
-            name: 'Tipo de mecanismo',
-            items: uniqueProcessedItems.map((segment:any) => ({ Title: segment, Check: false }))
-        };
-        
-        
-        
-        this.todos[5] = { name: 'Planta', items: plantas.map((i: string) => ({ Title: i.indexOf(";") > -1? i.substring(0,i.indexOf(";")) : i , Check: false })) };
-        this.todos[6] = { name: 'Proceso', items: procesos.map((i: any) => ({ Title: i.indexOf(";") > -1? i.substring(0,i.indexOf(";")) : i, Check: false })) };
-        this.todos[7] = { name: 'Categoría', items: categorias.map((i: any) => ({ Title: i, Check: false })) };
-
-        this.procesos[0] = { name: 'Área', items: areas.map((i: any) => ({ Title: i, Check: false })) };
-        this.procesos[1] = { name: 'Proceso', items: procesos.map((i: any) => ({ Title: i, Check: false })) };
-        this.procesos[2] = { name: 'Planta', items: plantas.map((i: any) => ({ Title: i, Check: false })) };
-        this.procesos[3] = { name: 'Tipo de mecanismo', items: tipoMecanismos.map((i: any) => ({ Title: i, Check: false })) };
-        this.procesos[4] = { name: 'País', items: paises.map((i: any) => ({ Title: i, Check: i == this.state.paisActual ? true : false })) };
-        this.procesos[5] = { name: 'Dirección', items: direcciones.map((i: any) => ({ Title: i, Check: false })) };
-        this.procesos[6] = { name: 'Subárea', items: subareas.map((i: any) => ({ Title: i, Check: false })) };
-        this.procesos[7] = { name: 'Categoría', items: categorias.map((i: any) => ({ Title: i, Check: false })) };
-
-        plantas.forEach((item: any, idx: any) => {
-            let pl = item.split(' ').join('+');
-            this.plantas.push(`"${pl}"`);
-        });
+        this.procesos[0] = { name: 'Área', items: areas.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoAreas[i.label] || 0 })).filter(item => item.Count > 0) };
+        this.procesos[1] = { name: 'Proceso', items: procesos.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoProcesos[i.label] || 0})).filter(item => item.Count > 0) };
+        this.procesos[2] = {name: 'Planta', items: plantas.map((i:any) => ({ Title: i.label,  Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoPlantas[i.label] || 0 })).filter(item => item.Count > 0) };                  
+        this.procesos[3] = { name: 'Tipo de mecanismo', items: tipoMecanismos.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i}"`) > -1? true: false, Count: conteoTipomecanismo[i.label] || 0})).filter(item => item.Count > 0) };
+        this.procesos[4] = { name: 'Dirección', items: direcciones.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true:  false, Count: conteoDirecciones[i.label] || 0})) };
+        this.procesos[5] = { name: 'Subárea', items: subareas.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoSubarea[i.label] || 0})).filter(item => item.Count > 0) };
+        this.procesos[6] = { name: 'Categoría', items: categorias.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoCategoria[i.label] || 0})).filter(item => item.Count > 0) };   
 
         if (this.plantas.length > 1) {
             this.filterPlantas.push(`(RefinableString06:or(${this.plantas}))`);
         } else {
             this.filterPlantas.push(`(RefinableString06:equals(${this.plantas}))`);
         }
-        
-        this.setState({
-            todosGrupo: this.todos,
-            procesosGrupo: this.procesos,
-            Plantas: this.filterPlantas            
-        }, () => {
-            this.setFilter('País', this.state.paisActual, false, 0);
-        });
-    }
-
-     // Función que establece los filtros resultados de la búsqueda
-     public onFiltersUpdate(items: any) {
-
-        this.plantas = [];
-        this.filterPlantas = [];
-        
-        let paises = [];
-        
-        paises.push(items.map((item: any) => item.Pais).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        }));    
-                     
-        paises = paises.filter((a: any) => a !== undefined && a !== null);
                 
-        let direcciones = items.map((item: any) => item.Direccion).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        });
-        direcciones = direcciones.filter((a: any) => a !== undefined && a !== null);
-
-        let areas = items.map((item: any) => item.Area).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        });
-        areas = areas.filter((a: any) => a !== undefined && a !== null);
-
-        let subareas = items.map((item: any) => item.Subarea).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        });
-        subareas = subareas.filter((a: any) => a !== undefined && a !== null);
-
-        let categorias = items.map((item: any) => item.Categoria).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        });
-        categorias = categorias.filter((a: any) => a !== undefined && a !== null);
-
-        let tipoMecanismos = items.map((item: any) => item.Tipomecanismo).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        });
-       
-        tipoMecanismos = tipoMecanismos.filter((a: any) => a !== undefined && a !== null);
-
-        let plantas = items.map((item: any) => item.Planta).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        });
-        plantas = plantas.filter((a: any) => a !== undefined && a !== null);
-
-        let procesos = items.map((item: any) => item.Proceso).filter((x: any, y: any, z: any) => {
-            return z.findIndex((v: any) => v === x) === y;
-        });
-        procesos = procesos.filter((a: any) => a !== undefined && a !== null);
-       
-        this.setState({
-            selectPaises: paises.map((item, index) => {
-            return {
-                label: item.Nombre_x0020_Pais,
-                value: item.Sigla,
-                key: index
-            }
-    })});
-        
-       
-        this.setState({
-            selectPaises: paises
-        })
-     
-        this.todos[0] = { name: 'País', items: paises.map((i: any) => ({ Title: i,  Check: this.filtroPais.indexOf(`"${i}"`) > -1? true : false })) };        
-        this.todos[1] = { name: 'Dirección', items: direcciones.map((i: any) => ({ Title: i, Check: this.filtroDireccion.indexOf(`"${i}"`) > -1? true:  false })) };
-        this.todos[2] = { name: 'Área', items: areas.map((i: any) => ({ Title: i, Check: this.filtroArea.indexOf(`"${i}"`) > -1? true: false })) };
-        this.todos[3] = { name: 'Subárea', items: subareas.map((i: any) => ({ Title: i, Check: this.filtroSubArea.indexOf(`"${i}"`) > -1? true: false})) };
-        
-        const processedItems = tipoMecanismos.map((i: string) => {
-            let segments = i.split(';');
-            return segments[segments.length - 1];
-        });
-
-        const uniqueProcessedItems = processedItems.filter((value: any, index: number, self: any[]) => {
-            return self.indexOf(value) === index;
-        });
-
-        this.todos[4] = {
-            name: 'Tipo de mecanismo',
-            items: uniqueProcessedItems.map((segment:any) => ({ Title: segment, Check: false }))
-        };
-        
-        
-        
-        this.todos[5] = { name: 'Planta', items: plantas.map((i: string) => ({ Title: i.indexOf(";") > -1? i.substring(0,i.indexOf(";")) : i, Check: this.filtroPlanta.indexOf(`"${i.substring(0,i.indexOf(";"))}"`) > -1? true: false})) };
-        this.todos[6] = { name: 'Proceso', items: procesos.map((i: string) => ({ Title: i.indexOf(";") > -1? i.substring(0,i.indexOf(";")) : i, Check: this.filtroProceso.indexOf(`"${i.substring(0,i.indexOf(";"))}"`) > -1? true: false})) };
-        this.todos[7] = { name: 'Categoría', items: categorias.map((i: any) => ({ Title: i, Check: this.filtroCategoria.indexOf(`"${i}"`) > -1? true: false})) };       
-
-        this.procesos[0] = { name: 'Área', items: areas.map((i: any) => ({ Title: i, Check: this.filtroArea.indexOf(`"${i}"`) > -1? true: false })) };
-        this.procesos[1] = { name: 'Proceso', items: procesos.map((i: any) => ({ Title: i, Check: false })) };
-        this.procesos[2] = { name: 'Planta', items: plantas.map((i: any) => ({ Title: i, Check: false })) };
-        this.procesos[3] = { name: 'Tipo de mecanismo', items: tipoMecanismos.map((i: any) => ({ Title: i, Check: false })) };
-        this.procesos[4] = { name: 'País', items: paises.map((i: any) => ({ Title: i, Check: this.filtroPais.indexOf(`"${i}"`) > -1? true : false })) };
-        this.procesos[5] = { name: 'Dirección', items: direcciones.map((i: any) => ({ Title: i, Check: this.filtroDireccion.indexOf(`"${i}"`) > -1? true:  false })) };
-        this.procesos[6] = { name: 'Subárea', items: subareas.map((i: any) => ({ Title: i, Check: false })) };
-        this.procesos[7] = { name: 'Categoría', items: categorias.map((i: any) => ({ Title: i, Check: false })) };
-
-        plantas.forEach((item: any, idx: any) => {
-            let pl = item.split(' ').join('+');
-            this.plantas.push(`"${pl}"`);
-        });
-
-        if (this.plantas.length > 1) {
-            this.filterPlantas.push(`(RefinableString06:or(${this.plantas}))`);
-        } else {
-            this.filterPlantas.push(`(RefinableString06:equals(${this.plantas}))`);
-        }
-        
         this.setState({
             todosGrupo: this.todos,
             procesosGrupo: this.procesos,
             Plantas: this.filterPlantas,
-            isLoading: false
-           
+            isLoading: false           
         });
+
+
     }
+
     // Función que asigna los filtros y crea la query para enviarla al servicio de búsqueda
     public setFilter(group: string, label: string, checked: boolean, index: number): void {
       
@@ -649,13 +629,13 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
         }
         
         // Asignación de filtro País
-        if (group == 'País') {    
-            if (checked == false) {  
-                this.filtroPais.push(label);                    
+        if (group == 'País') {
+            if (checked == false) {
+                this.filtroPais.push(label);
                 this.queryPais = this.filtroPais.length > 1 ? `(RefinableString00:or(${this.filtroPais.toString()}))` : `(RefinableString00:equals(${this.filtroPais.toString()}))`;                                                                          
-            } else {               
-                this.filtroPais = this.filtroPais.filter(x => x != `"${label}"`);                           
-                this.queryPais = this.filtroPais.length > 1 ? `(RefinableString00:or(${this.filtroPais.toString()}))` : '';   
+            } else {
+                this.filtroPais = this.filtroPais.filter(x => x != `"${label}"`);
+                this.queryPais = this.filtroPais.length > 1 ? `(RefinableString00:or(${this.filtroPais.toString()}))` : '';
             }
         }
 
@@ -752,15 +732,86 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
        
     }
 
+    public setFilterCheck(group: string, label: string, checked: boolean): void {       
+        let newFilters = { ...this.state.filters };
+        
+        let groupss = this.obtenerCorrespondencia(group,null) || ""
+                        
+        let allGroupsEmpty = true;        
+
+        if (!newFilters[groupss]) {
+            newFilters[groupss] = new Set();
+        }
+    
+        if (checked) {
+            newFilters[groupss].add(label);
+            this.filtroItem.push(label);
+        } else {
+            newFilters[groupss].delete(label);
+            
+            let index = this.filtroItem.indexOf(label);          
+            if (index > -1) {
+                this.filtroItem.splice(index, 1);
+            }
+        }
+        
+        for (const group in newFilters) {
+            if (newFilters[group].size > 0) {
+                allGroupsEmpty = false;
+                break;
+            }
+        }               
+    
+        let filteredData:any[] = []
+
+        this.state.filterSearchData.forEach((item:any) => {
+            let isMatch = true;           
+        
+            for (let filterGroup in newFilters) {                          
+
+                if (newFilters.hasOwnProperty(filterGroup) && newFilters[filterGroup].size > 0) {                    
+                    let groupMatch = false;                                        
+
+                    let foundMatch = false;
+                    newFilters[filterGroup].forEach((filter:any) => {                        
+                        if (!foundMatch && (item[filterGroup] === filter || (Array.isArray(item[filterGroup]) && item[filterGroup].includes(filter)))) {
+                            groupMatch = true;
+                            foundMatch = true; 
+                        }
+                    })
+                           
+                    if (!groupMatch) {
+                        isMatch = false;
+                        break;
+                    }
+                }
+            }
+        
+            if (isMatch) {               
+                filteredData.push(item);
+            }
+        });                                            
+        
+    
+        this.setState({
+            filters: newFilters,
+            searchData: allGroupsEmpty ? this.state.filterSearchData : filteredData,
+            count: true,
+            currentPage: 1,
+            isLoading: false,
+            totalRow: filteredData.length
+        }, () => {
+            this._onPageUpdate();
+            this.onFiltersUpdate(allGroupsEmpty ? this.state.filterSearchData : filteredData);
+        });                              
+    }
+    
     // Función que realiza la búsqueda con los filtros asignados, y retorna los resultados
-    public getDataFiltered() {
+    public getDataFiltered(){
 
         this.filtros = [];
         let refiners: any;
-
-        if (this.queryPais != '') {
-            this.filtros.push(this.queryPais);
-        }
+       
         if (this.queryDireccion != '') {
             this.filtros.push(this.queryDireccion);
         }
@@ -788,27 +839,11 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
 
         this.state.showTab ? refiners = todos : refiners = procesos;
                
-        if (this.state.search.length > 1) {
-            
-            this.pnp.searchInLibrary(this.state.sitioLibrary,this.state.search ,this.props.Sigla,"getdatafilter", refiners)
-                .then(res => {                  
-                    this.setState({
-                        searchData: res,
-                        count: true,
-                        currentPage: 1,
-                        isLoading: false
-                    }, () => {
-                        this._onPageUpdate();  
-                        this.onFiltersUpdate(res.data);
-
-                    });
-                });
-            
-                
+        if (this.state.search.length > 1) {                   
+            this.procesarBusquedasSecuenciales(refiners)                                             
         } 
     }
     
-
     // Función que renderiza el componente
     public render(): React.ReactElement<IResultadosBuscadorProps> {
         
@@ -819,33 +854,36 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
 
         return (
             <>
+             <style>{`
+                #sbcId {
+                display: none !important;
+                }
+            `}</style>
             <Modal
-            isOpen={this.state.showModal}
-            onDismiss={() => this.setState({showModal: false})}
-            isBlocking={false}
-            className='customModalContainer'>
-             <div style={{textAlign: 'right'}}>
-                <button onClick={() => this.setState({showModal: false})}>X</button>
-            </div>
-            <Pilares
-                Titulo="Pilares"
-                context={this.props.webPartContext}
-                currentUser={this.state.currentUser}
-                userID={this.state.UserId}
-                urlSitioPrincipal={this.state.urlSite}
-                Subsitio={this.state.estadoSitio}
-                NombreSubsitio={this.state.sitio}
-                SitioSigla={this.props.Sigla}
-                {...this.state.pilaresProps}                        
-            />
+                isOpen={this.state.showModal}
+                onDismiss={() => this.setState({showModal: false})}
+                isBlocking={false}
+                className='modalOverlay'>
+                <div style={{textAlign: 'right'}}>
+                    <button onClick={() => this.setState({showModal: false})}>X</button>
+                </div>
+                <ModelMecanismo
+                    Titulo="Ficha mecanismo"
+                    Context={this.props.webPartContext}                   
+                    userID={this.state.UserId}
+                    EstadoTablaModelo={this.state.estadoTablaModelo}
+                    {...this.state.pilaresProps}                                                                               
+                    SetEstadoTablaModelo = {this.SetEstadoTablaModelo.bind(this)}                                      
+                    tablaModelo = {this.TablaModelo.bind(this)}
+                    closeModal={this.closeModalMecan.bind(this)}
+                />
             </Modal>
 
-            <Modal
-                
-                isOpen={this.state.showModalDocument}
-                onDismiss={() => this.setState({showModalDocument: false})}
-                isBlocking={false}
-                className='customModalContainer'>
+            <Modal                
+            isOpen={this.state.showModalDocument}
+            onDismiss={() => this.setState({showModalDocument: false})}
+            isBlocking={false}
+            className='modalOverlay'>
                 
                 <div style={{textAlign: 'right'}}>
                     <button onClick={() => this.setState({showModalDocument: false})}>X</button>
@@ -860,83 +898,106 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                 {...this.state.CommentProps}   
                 />
             </Modal>
-                     
-            <div className="Fontpage" >                 
-                <div className="row">
-                    <div className="col-md-3 color-card animate__animated animate__fadeIn" style={{ width: "280px", minHeight: "71vh" }}>
-                        <div className="card-body" style={{ paddingRight: "25px" }}>
-                            <h4 className="text-gray-500 fs-21 mb-8">Filtrar por:</h4>
+            
+            <Modal                
+            isOpen={this.state.showModalExtender}
+            onDismiss={() => this.setState({showModalExtender: false})}
+            isBlocking={false}
+            className='modalOverlay'>
+                <ExtenderVigencia
+                 webPartContext ={this.props.webPartContext} 
+                 NombreSubsitio ={this.state.urlSite}
+                 urlSitioPrincipal={this.state.urlSite}
+                 UserId ={this.props.userId}
+                 {...this.state.ExtenderProps}>
+                </ExtenderVigencia>
 
-                            {this.state.showTab == true ?
-                                <>
+            </Modal>
+
+            <Modal isOpen={this.state.showModalCrear}
+            onDismiss={() => this.setState({showModalCrear: false})}
+            isBlocking={false}
+            className='modalOverlay'>
+                <CrearContenido
+                    Titulo="CrearContenido"
+                    currentUser={this.state.userId}
+                    urlSitioPrincipal={this.state.urlSite}
+                    context={this.props.webPartContext}
+                    Subsitio={this.state.sitioLocal}
+                    NombreSubsitio={this.state.sitio}
+                    Direcciones ={this.props.Direcciones}
+                    Areas={this.props.Areas}
+                    SubAreas={this.props.SubAreas}
+                    {...this.state.CrearProps}
+                    >                    
+                </CrearContenido>
+            </Modal>
+
+            <Box sx={{ flexGrow: 1 }}>                         
+            <Grid container spacing={2}>
+                <Grid sx={{backgroundColor: '#EEF2F3'}} xs={2}>                                        
+                    <FormLabel sx={{ fontWeight: 'bold' }} component="legend">Filtrar por:</FormLabel>     
+                        {this.state.showTab == true ?
+                            <>
+                                    <Item>
+                                        <FormLabel sx={{ fontWeight: 'bold' }} component="legend">Paises</FormLabel>
+                                        <FormGroup>
+                                            {this.props.paises.map((item:any) => (                                            
+                                                <FormControlLabel value={item.Sigla} sx={{ justifyContent: 'start' }} control={<Checkbox checked={this.state.checkPaises[item.Sigla]} onChange={() => this.handleCheckboxChange(item.Sigla)} />} label={item.Nombre_x0020_Pais} />                                             
+                                            ))}
+                                        </FormGroup>
+                                    </Item>
+
                                     {this.state.todosGrupo.map((g: any, i: any) => (
                                         <FilterTodos
                                             context={this.props.webPartContext}
                                             items={g.items}
                                             name={g.name}
                                             search={this.state.search}                                            
-                                            setFilter={(group: any, label: any, checked: any, index: number) => this.setFilter(group, label, checked, index)}
+                                            setFilter={(group: any, label: any, checked: any) => this.setFilterCheck(group, label, checked)}
+                                            toggleExpanded={this.toggleExpanded}
+                                            expanded={this.state.expanded}
                                         />
                                     ))}
-                                </>
-                                :
-                                <>
+                            </>
+                            :
+                            <>
+                                    <Item>
+                                        <FormLabel sx={{ fontWeight: 'bold' }} component="legend">Paises</FormLabel>
+                                        <FormGroup>
+                                            {this.props.paises.map((item:any) => (                                            
+                                                <FormControlLabel value={item.Sigla} sx={{ justifyContent: 'start' }} control={<Checkbox checked={this.state.checkPaises[item.Sigla]} onChange={() => this.handleCheckboxChange(item.Sigla)} />} label={item.Nombre_x0020_Pais} />                                             
+                                            ))}
+                                        </FormGroup>
+                                    </Item>
+
                                     {this.state.procesosGrupo.map((g: any, i: any) => (
                                         <FilterProcesos
                                             context={this.props.webPartContext}
                                             items={g.items}
                                             name={g.name}
                                             search={this.state.search}
-                                            setFilter={(group: any, label: any, checked: any, index: number) => this.setFilter(group, label, checked, index)}
+                                            setFilter={(group: any, label: any, checked: any) => this.setFilterCheck(group, label, checked)}
+                                            toggleExpanded={this.toggleExpanded}
+                                            expanded={this.state.expanded}
                                         />
                                     ))}
-                                </>
-                            }
-
-                        </div>
-                    </div>
-                    <div className="col animate__animated animate__fadeIn">
+                            </>
+                        }                    
+                                        
+                </Grid>
+                <Grid xs={8}>
                         <div className="card-body">                            
                             <div style={{ display: "flex", justifyContent: "space-between" }}>
                                 <div className="position-relative w-md-550px me-md-2">
-                                    <form className="row g-3" onSubmit={(e) => this.onSubmitSearch(e)} autoComplete="on">                                                                               
-                                        
-                                        <div className="col-auto">
-                                            <Select className="" name="selectP" options={this.state.selectPaises.map((t: any) =>({value: t,label: t})) } />                                           
-                                        </div>
-                                        
-                                        <div className="col-auto">
-                                            <span
-                                                onClick={(e) => this.onSubmitSearch(e)}
-                                                style={{ cursor: 'pointer' }}
-                                                className="svg-icon svg-icon-3 svg-icon-gray-500 position-absolute top-50 translate-middle ms-6">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                                    <rect x="7.0365" y="19.1223" width="8.15546" height="2" rx="2" transform="rotate(125 7.0365 19.1223)" fill="currentColor"></rect>
-                                                    <path d="M11 19C6.55556 19 3 15.4444 3 11C3 6.55556 6.55556 3 11 3C15.4444 3 19 6.55556 19 11C19 15.4444 15.4444 19 11 19ZM11 5C7.53333 5 5 7.53333 5 11C5 14.4667 7.53333 17 11 17C14.4667 17 17 14.4667 17 11C17 7.53333 14.4667 5 11 5Z" fill="currentColor"></path>
-                                                </svg>
-                                            </span>
-                                            <input
-                                                type="search"
-                                                className="form-control ps-10"
-                                                style={{ height: "40px" }}
-                                                name="search"
-                                                value={this.state.search}
-                                                onChange={(e) => this.onInputChange(e)}
-                                                onKeyDown={(e) => this.onInputPress(e)}
-                                                autoComplete="on"
-                                                placeholder="Buscar" />
-                                        </div>
-                                    </form>
-
-
+                                
                                     {/* ================>  Suggestion panel   <================ */}
                                     {this.state.clean && this.state.partialSearchingResults && this.state.partialSearchingResults.length > 1 ?
                                         <div className="SearchPanel ">
                                             <ul>
                                                 {this.state.partialSearchingResults.map((res: any, idx: any) => (
                                                     <li key={idx} style={{ height: "20px", marginTop: "8px" }}
-                                                        onClick={() => this.onCleanPanel()}
-                                                    >
+                                                        onClick={() => this.onCleanPanel()}>
                                                         <img alt="No cargo" style={{ height: "16px", marginRight: "8px", marginBottom: "4px" }}
                                                             src={this.pnp.getImageFile(res.FileName)} />
                                                         <a href={res.LinkingUrl != null ? res.LinkingUrl : res.ServerRedirectedEmbedURL}
@@ -966,14 +1027,15 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                                 {!this.state.showTab ?
                                     <button type="button"  className="d-flex"
                                         style={{ background: "none", border: "0", color: "inherit" }}>
-                                        <a
-                                            href={this.state.linkMapaMecanismo}
+                                        <a                                            
+                                            href={(this.props.parametros.filter((elemento: any) => elemento.Llave === "LinkMapaMecanismosPOM" + this.props.Sigla)[0] ?? {}).Valor} 
                                             className="btn btn-outline btn-outline-primary btn-active-primary"
                                             target="_blank"
                                             data-interception="off"
                                             rel="noopener noreferrer"
                                         >
-                                            <strong>Mapa de Mecanismos POM</strong>
+                                                     
+                                            <strong>{(this.props.parametros.filter((elemento: any) => elemento.Llave === "BotonMapaMecanismosPOM")[0] ?? {}).Valor}</strong>
                                         </a>
                                     </button>
                                     : null}
@@ -981,6 +1043,26 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                         </div>
 
                         <div className="card-body" style={{ marginTop: "-15px" }}>
+
+                        <TextField 
+                            className='SearchTextField'                       
+                            label="Ingresa tu texto"
+                            variant="outlined"
+                            value={this.state.search}
+                            onChange={this.onInputChange}
+                            onKeyPress={this.onInputPress}
+                            InputProps={{
+                                endAdornment: (
+                                <InputAdornment position="end">
+                                    <Button onClick={this.getDataFiltered}>
+                                        <SearchIcon />
+                                    </Button>
+                                </InputAdornment>
+                                ),
+                            }}
+                            />
+                            <br />
+
 
                             <ul className="nav nav-pills nav-tabs mb-8 fs-6">
                                 {this.state.showTab == true ?
@@ -994,8 +1076,8 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                                         <li className="nav-item">
                                             <button
                                                 onClick={() => this.onTabChange('procesos')}
-                                                className="nav-link text-hover-primary text-gray-700"
-                                                type="button">Procesos de manufactura
+                                                className="nav-link text-hover-primary text-gray-700"                                                
+                                                type="button">{(this.props.parametros.filter((elemento: any) => elemento.Llave === "LabelProcesosdeManufactura")[0] ?? {}).Valor}
                                             </button>
                                         </li>
                                     </>
@@ -1003,15 +1085,15 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                                     <>
                                         <li className="nav-item">
                                             <button
-                                                onClick={() => this.onTabChange('todos')}
-                                                className="nav-link text-hover-primary text-gray-700">Todos
+                                                onClick={() => this.onTabChange('todos')}                                                                                                      
+                                                className="nav-link text-hover-primary text-gray-700">{(this.props.parametros.filter((elemento: any) => elemento.Llave === "LabelTodos")[0] ?? {}).Valor}
                                             </button>
                                         </li>
                                         <li className="nav-item active">
                                             <button
                                                 className="nav-link active"
-                                                style={{ height: '35px', borderRadius: '5px 5px 0 0' }}
-                                                type="button">Procesos de manufactura
+                                                style={{ height: '35px', borderRadius: '5px 5px 0 0' }}                                                
+                                                type="button">{(this.props.parametros.filter((elemento: any) => elemento.Llave === "LabelProcesosdeManufactura")[0] ?? {}).Valor}
                                             </button>
                                         </li>
                                     </>
@@ -1020,11 +1102,11 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                             <div className="tab-content" id="myTabContent" style={{ marginTop: "-5px", fontSize: "12px" }}>
                                 <div className="tab-pane fade show active animate__animated animate__fadeIn">
                                     <>
-                                        {this.state.searchData.data != null && this.state.searchData.data.length > 0 ?
+                                        {this.state.searchData != null && this.state.searchData.length > 0 ?
                                             <>
                                                 {this.state.count && this.state.search && this.state.search.length > 1 ?
                                                     <div className="fs-6 mt-2" style={{ marginBottom: "-10px" }}>
-                                                        <span style={{ fontSize: "14px", fontWeight: 600 }}>{this.state.searchData.count} resultados para: "{this.state.search}"</span>
+                                                        <span style={{ fontSize: "14px", fontWeight: 600 }}>{this.state.searchData.length} resultados para: "{this.state.search}"</span>
                                                     </div>
                                                     : null}
                                                 {this.state.pagedItems.map((d: any, i: any) =>                                                
@@ -1050,7 +1132,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                                                                 {d.Preview}
                                                             </div>
                                                             <div className="d-flex align-items-center mb-1">                                                                                                                                                                                   
-                                                                <div onClick={(e) => this.getMecanismo(d.Direccion, d.Area, d.Seguridad, d.IDMecanismoLocal)}
+                                                                <div onClick={(e) => this.getMecanismo(d.Direccion, d.Area, d.Seguridad, d.IDMecanismoLocal, d.Pais)}
                                                                 className="text-primary text-hover-primary" style={{ cursor: "pointer" }}>
                                                                     <span className="svg-icon svg-icon-3 text-primary pe-1 verficha">
                                                                         <strong>Ver Ficha</strong>
@@ -1080,11 +1162,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                                                                     target="_blank"
                                                                     data-interception="off"
                                                                     rel="noopener noreferrer">
-                                                                    {this.pnp.validarURL(d.PictureThumbnailURL) ?
-                                                                        <img alt="No cargo" src={d.PictureThumbnailURL} width="95rem" height="95rem" />
-                                                                        :
-                                                                        <img alt="No cargo" src={this.pnp.genericFile()} width="65rem" height="65rem" />
-                                                                    }
+                                                                    <img alt="No cargo" src={d.PictureThumbnailURL} width="95rem" height="95rem"  onError={(e:any) => { e.target.onerror = null; e.target.src = "https://res-1.cdn.office.net/files/fabric-cdn-prod_20220628.003/assets/item-types/20/genericfile.svg"; }}/>                                                                        
                                                                 </a>
                                                                 <div className="thumbnail__hover">
                                                                     <img alt="No cargo" style={{ height: "26px", width: "26px", marginBottom: "4px" }}
@@ -1111,7 +1189,10 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                                                                             <div className="menu-modal">
                                                                                 <>
                                                                                     <div className="">
-                                                                                        <a href={`${this.state.urlSubSite}#/CrearContenido/1/3/${d.Tipomecanismo}`}
+                                                                                        <a onClick={(e) => {
+                                                                                                e.preventDefault(); 
+                                                                                                this.openModalCrear(1,3,d.Tipomecanismo);
+                                                                                            }}
                                                                                             target="_blank"
                                                                                             className="menu-links px-2 text-gray-900 text-hover-primary"
                                                                                             data-interception="off"
@@ -1120,7 +1201,10 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                                                                                         </a>
                                                                                     </div>
                                                                                     <div className="">
-                                                                                        <a href={`${this.state.urlSubSite}#/CrearContenido/1/2/${d.Tipomecanismo}`}
+                                                                                        <a onClick={(e) => {
+                                                                                                e.preventDefault(); 
+                                                                                                this.openModalCrear(1,2,d.Tipomecanismo);
+                                                                                            }}
                                                                                             target="_blank"
                                                                                             className="menu-links px-2 text-gray-900 text-hover-primary"
                                                                                             data-interception="off"
@@ -1129,7 +1213,10 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                                                                                         </a>
                                                                                     </div>
                                                                                     <div className="">
-                                                                                        <a href={`${this.state.urlSubSite}#/ExtenderVigencia/${d.Tipomecanismo}`}
+                                                                                        <a  onClick={(e) => {
+                                                                                                e.preventDefault(); 
+                                                                                                this.openModalExtender(d.Tipomecanismo);
+                                                                                            }}
                                                                                             target="_blank"
                                                                                             className="menu-links px-2 text-gray-900 text-hover-primary"
                                                                                             data-interception="off"
@@ -1193,28 +1280,29 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                                     <div style={{ width: '100%', display: 'inline-block', marginTop: '30px' }}>
                                         <Pagination
                                             currentPage={this.state.currentPage}
-                                            totalPages={Math.ceil(this.state.searchData.count / this.state.pageSize)}
+                                            totalPages={Math.ceil(this.state.totalRow / this.state.pageSize)}
                                             onChange={(page) => this._onPageUpdate(page)}
                                             limiter={3}
+
                                         />
                                     </div>
                                     : null}
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
+                </Grid>
+            </Grid>
+            </Box>            
         </>
         );
     }
 
     // Función para realizar la paginación
-    private _onPageUpdate = async (page?: number) => {
+    private _onPageUpdate = async (page?: number) => {       
         const currentPge = (page) ? page : this.state.currentPage;
         let startItem = ((currentPge - 1) * this.state.pageSize);
         let endItem = currentPge * this.state.pageSize;
         
-        let filItems = slice(this.state.searchData.data, startItem, endItem);
+        let filItems = slice(this.state.searchData, startItem, endItem);
                 
         this.setState({
             currentPage: currentPge,
@@ -1223,10 +1311,12 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
     }    
 }
 
-const mapStateToProps = (state:any) => {
-    return {
-      paises: state.paises,
+    const mapStateToProps = (state:any) => {
+        return {
+        parametros: state.parametros.parametros,
+        paises: state.paises.paises,
+        terms: state.terms.terms,
+        };
     };
-  };
 
 export default connect(mapStateToProps)(withRouter(ResultadosBuscador));

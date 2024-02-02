@@ -5,6 +5,7 @@ import { sitioReducer } from '../reducers/siteReducer';
 import paisesReducer from '../reducers/paisReducer';
 import userDetailReducer from '../reducers/userDetailReducer';
 import nivelAprobacionReducer from '../reducers/nivelAprobacionReducer';
+import termsReducer from '../reducers/termsReducer';
 
 const rootReducer = combineReducers({
   parametros: parametrosReducer,
@@ -12,6 +13,7 @@ const rootReducer = combineReducers({
   paises: paisesReducer,
   userDetail: userDetailReducer,
   nivelAprobacion: nivelAprobacionReducer,
+  terms: termsReducer,
 });
 
 const configureStore = () => {

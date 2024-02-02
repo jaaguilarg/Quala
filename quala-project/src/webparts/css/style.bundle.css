@@ -34334,6 +34334,8 @@ svg text{
 	color: #3f4254!important;
 }
 
+
+
 .text-hover-gray-800:hover .svg-icon {
 	color: #3f4254!important;
 }
@@ -51501,7 +51503,7 @@ nav svg{
   }
   #Contadordescripajustes {
     font-size: 12px;
-    color: #aaa;
+    color: #000000;
     margin-top: 10px;
 }
 .Componentesajustes{
@@ -51671,6 +51673,8 @@ nav svg{
 .CerrarModalsintitulo{
 	display: flex;
     justify-content: right;
+	position: relative;
+	
 }
 .CerrarModal{
 	padding-left: 590px;
@@ -51729,11 +51733,29 @@ nav svg{
 }
 
 #MenuPilares{
-	margin-top:  -1.0999999999999996em !important;
+	margin-top: -0.09999999999999964em!important;
+
+}
+
+
+#inputMdecanismo{
+	margin-top: 26px !important;
+}
+
+#listaMecanismo{
+	list-style-type: none !important;
 }
 
 
 
+.pb-0 {
+	margin-left: 39px !important;
+}
+
+#sinNumero{
+background-color: rgba(255, 255, 255, .4);
+color: #ffffff00 !important
+}
 
 
 

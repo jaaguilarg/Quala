@@ -19,7 +19,8 @@ export interface IExtenderVigenciaProps {
   paises: any;
   userDetail: any;  
   parametros: any;
-  niveles: any;      
+  niveles: any;
+  mecanismoId: any;      
 }
 
 class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
@@ -107,12 +108,12 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
   // Revisada CRP
   private consultarMensajeFinal() {
 
-    var msjFinal = this.props.parametros.filter((x:{Llave:any}) => x.Llave == 'MensajeDeExito');
-    var linkFinal = this.props.parametros.filter((x:{Llave:any}) => x.Llave == 'LinkMensajeFinal');
+    var msjFinal = (this.props.parametros.filter((elemento: any) => elemento.Llave === "MensajeDeExito")[0] ?? {}).Valor;    
+    var linkFinal = (this.props.parametros.filter((elemento: any) => elemento.Llave === "LinkMensajeFinal")[0] ?? {}).Valor;
 
     this.setState({
-      msjFinal: msjFinal.length > 0 ? msjFinal[0].Valor : "",
-      linkFinal: linkFinal.length > 0 ? linkFinal[0].Valor :""
+      msjFinal: msjFinal,
+      linkFinal: linkFinal
     });
   }
 
@@ -2050,7 +2051,7 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
                                         </div>
                                         <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12">
                                           <figure>
-                                            <img title='.' src={this.props.urlSitioPrincipal + "/Style%20Library/Logo_hz_Nova@2x.png"} width="35%" height="auto" />
+                                            <img title='.' src={this.props.urlSitioPrincipal + "/ActivosGC/Root/Quala_Logo_GC.png"} width="35%" height="auto" />
                                           </figure>
                                         </div>
                                         <h3 className="text-gray-600 fs-5">

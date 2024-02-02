@@ -31,8 +31,17 @@ class Visor extends React.Component<IVisorProps, any> {
       Gestor: [],
       linkMapaMecanismo: "",
       DuenoModelo: [],
+      Area: "",
+      SubArea: "",
       gestores: [],
+      Modelo:""
     };
+  }
+
+  public componentDidMount() {
+    console.log(this.props.match.params.IDModelo);
+    this.loadContextSite();   
+    this.consultaModeloLocal()    
   }
 
   // funcion para iniciar variables globales para las funcionalidades
@@ -48,9 +57,7 @@ class Visor extends React.Component<IVisorProps, any> {
           
         }
       );
-    });
-            
- 
+    });           
   }
 
   // funcion validacion de roles
@@ -96,7 +103,7 @@ class Visor extends React.Component<IVisorProps, any> {
 
             this.setState({
               Lector: Lecto,
-            }, () => {this.consultarModelo();});
+            }, () => {});
           });
         }
       );
@@ -105,90 +112,73 @@ class Visor extends React.Component<IVisorProps, any> {
     }
   }
 
-  public consultarModelo()
-  {
-    this.pnp.consultarModelo(this.props.SitioSigla,this.props.match.params.direccion,this.props.match.params.SubArea,this.props.match.params.IdVisor).then((items: any[]) =>{
-                     
-      let url: string = "";
-      var item = items[0];
-      
-      url = item.Vinculo_x0020_Portada_x0020_Mode.split("action")[0] + "action=embedview&amp;wdAr=1.7777777777777777";
-                     
-        this.setState({
-          linkMapaMecanismo: item.Vinculo_x0020_Mapa_x0020_Mecanis,
-          VisorOk: this.props.match.params.IdVisor + "/" + this.props.match.params.SubArea,
-          UrlPresentacion: '<iframe src="' + url + '" width="100%" height="600px" ></iframe>'
-        }, () => {  });                           
-    });   
-  }
+  public consultaModeloLocal(){
 
-  public componentDidMount() {
-    this.loadContextSite();       
-  }
+   
+    var ViewXml =  `<FieldRef Name="Nombre_x0020_Direccion"/>
+                    <FieldRef Name="Nombre_x0020_Area"/>
+                    <FieldRef Name="Vinculo_x0020_Portada_x0020_Mode"/>
+                    <FieldRef Name="Vinculo_x0020_Mapa_x0020_Mecanis"/>
+                    <FieldRef Name="Nombre_x0020_Sub_x0020_area"/>
+                    <FieldRef Name="Nombre_x0020_Modelo_x0020_Local"/>
+                    `;
 
+    var FilterXml =  `<Query>
+                      <Where>
+                        <Eq>
+                            <FieldRef Name='ID'></FieldRef>
+                            <Value Type="Number">${this.props.match.params.IDModelo}</Value>
+                        </Eq>
+                      </Where>                       
+                    </Query> `
+
+    this.pnp.getListItemsWithTaxo('',"Modelos Local",ViewXml,FilterXml).then((res)=>{
+      console.log(res)
+
+      this.setState({        
+        linkMapaMecanismo: res[0].Vinculo_x0020_Mapa_x0020_Mecanis,
+        VisorOk: this.props.match.params.IdVisor + "/" + this.props.match.params.SubArea,
+        Modelo:res[0].Nombre_x0020_Direccion.Label,
+        Area: res[0].Nombre_x0020_Area.Label,
+        SubArea: res[0].Nombre_x0020_Sub_x0020_area.Label,
+        UrlPresentacion: '<iframe src="' + res[0].Vinculo_x0020_Portada_x0020_Mode.split('action')[0] + 'action=embedview&amp;wdAr=1.7777777777777777' + '" width="100%" height="600px" ></iframe>'
+      });
+
+
+    });
+
+  }
 
   public render(): React.ReactElement<IVisorProps> {    
     return (
       <div>
         <div className="toolbar py-5 py-lg-7" id="kt_toolbar">
-          <div
-            id="kt_toolbar_container"
-            className="container-xxl d-flex flex-stack flex-wrap"
-          >
+          <div id="kt_toolbar_container" className="container-xxl d-flex flex-stack flex-wrap">
             <div className="page-title d-flex flex-column me-3">
-              {this.props.match.params.SubArea &&
-              this.props.match.params.IdVisor &&
-              this.props.match.params.direccion ? (
-                <h1 className="ffspecial d-flex text-dark fw-bolder my-1 fs-2">
-                  Modelo de {this.props.match.params.SubArea}
-                </h1>
-              ) : null}
-
-              {!this.props.match.params.SubArea &&
-              this.props.match.params.IdVisor &&
-              this.props.match.params.direccion ? (
-                <h1 className="ffspecial d-flex text-dark fw-bolder my-1 fs-2">
-                  Modelo de {this.props.match.params.IdVisor}
-                </h1>
-              ) : null}
-              {!this.props.match.params.SubArea &&
-              !this.props.match.params.IdVisor &&
-              this.props.match.params.direccion ? (
-                <h1 className="ffspecial d-flex text-dark fw-bolder my-1 fs-2">
-                  Modelo de {this.props.match.params.direccion}
-                </h1>
-              ) : null}
-
-              <ul className="breadcrumb breadcrumb-dot fw-bold text-gray-600 fs-7 my-1">
-                <li className="breadcrumb-item text-gray-600">
-                  <Link to="/">
-                    <a className="text-gray-600 text-hover-primary">Inicio</a>
-                  </Link>
-                </li>
-                {this.props.match.params.direccion ? (
+              <ul className="breadcrumb breadcrumb-dot fw-bold text-gray-600 fs-7 my-1">                           
                   <li className="breadcrumb-item text-gray-600">
                     <Link to="/">
                       <a className="text-gray-600 text-hover-primary">
-                        {this.props.match.params.direccion}
+                       {this.state.Modelo}
                       </a>
                     </Link>
                   </li>
-                ) : null}
+                
+                  <li className="breadcrumb-item text-gray-600">
+                    <a className="text-gray-600 text-hover-primary">
+                     {this.state.Area}
+                    </a>
+                  </li>
 
-                {this.props.match.params.IdVisor ? (
                   <li className="breadcrumb-item text-gray-600">
-                    <a className="text-gray-600 text-hover-primary">
-                      {this.props.match.params.IdVisor}
-                    </a>
+                    <Link to="/">
+                      <a className="text-gray-600 text-hover-primary">
+                        {this.state.SubArea}
+                      </a>
+                    
+                    </Link>
+
                   </li>
-                ) : null}
-                {this.props.match.params.SubArea ? (
-                  <li className="breadcrumb-item text-gray-600">
-                    <a className="text-gray-600 text-hover-primary">
-                      {this.props.match.params.SubArea}
-                    </a>
-                  </li>
-                ) : null}
               </ul>
             </div>
             {/* boton regresar aqui */}
@@ -233,9 +223,7 @@ class Visor extends React.Component<IVisorProps, any> {
 														<div  style={{width:"100%"}}>
 															<figure>
 																{
-																	this.state.UrlPresentacion != "" ? <div dangerouslySetInnerHTML={{ __html: this.state.UrlPresentacion }} />
-
-																		: null
+																	this.state.UrlPresentacion != "" ? <div dangerouslySetInnerHTML={{ __html: this.state.UrlPresentacion }} />: null
 
 																}
 
@@ -245,19 +233,19 @@ class Visor extends React.Component<IVisorProps, any> {
 												</div>
 												<div className='aligend'>
 												
-												{
+												{/*
 													this.state.gestores && this.state.gestores.length > 0? //
 														<div className="d-flex my-4 me-3">
-															<Link to="/CrearContenido/3">
+															<Link to="/FormularioActualizacion">
 																<a className="sizebutton nonecolor btn btn-sm btn-outline btn-outline-primary btn-active-primary">Gestionar Modelo de Área</a>
 															</Link>
 
 														</div>
 
 														: null
-												}
+                              */}
 												<div className="d-flex my-4 me-3">
-													<a href={this.state.linkMapaMecanismo} className=" sizebutton btn btn-sm btn-outline btn-outline-primary btn-active-primary">Mapa
+													<a href={this.state.linkMapaMecanismo} className="sizebutton btn btn-sm btn-outline btn-outline-primary btn-active-primary">Mapa
 														de Mecanismos</a>
 												</div>
 												</div>
@@ -277,4 +265,5 @@ class Visor extends React.Component<IVisorProps, any> {
     );
   }
 }
+
 export default withRouter(Visor);

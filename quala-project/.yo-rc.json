@@ -1,0 +1,21 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "14.17.3",
+    "sdksVersions": {
+      "@microsoft/microsoft-graph-client": "3.0.2",
+      "@microsoft/teams-js": "2.9.1"
+    },
+    "version": "1.17.4",
+    "libraryName": "portal-gcsp",
+    "libraryId": "402a7bf0-3d1b-4a66-9d47-4a38b4d4ac60",
+    "environment": "spo",
+    "packageManager": "npm",
+    "solutionName": "PortalGCSP",
+    "solutionShortDescription": "PortalGCSP description",
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "componentType": "webpart"
+  }
+}

@@ -17,11 +17,16 @@ import CrearContenido from "../components/Formulario/CrearContenido";
 import ComentarDocumentos from "./Formulario/ComentarDocumentos";
 import Header from "./Views/Header";
 import Aprobaciones from "./Formulario/Aprobaciones";
+import Componentes from "./Formulario/Componentes";
 //import LoaderComponent from "./Views/LoaderComponent";
 import { ErrorBoundary } from "./Util/ErrorBoundary";
 import ExtenderVigencia from "./Formulario/ExtenderVigencia";
 import { loadUser } from "../actions/userDetailActions";
 import { loadNivelAprobacion } from "../actions/nivelAprobacionActions";
+import ModeloMecanismo from "./Views/ModeloMecanismo";
+import CrearContenidoN from "../components/Formulario/CrearContenidoN"
+import { loadterms } from "../actions/termsActios";
+import {UtilsFunctions} from "./Util/UtilsFunctions";
 
 
 interface IState {
@@ -51,13 +56,15 @@ interface IState {
   urlDesarrollo: string;
   Version: any;
   macroProcesos: [];
-  parametrosTecnicos: {ID: any; Llave: string; Valor: string; Descripcion: string; } [];
   isLoading: boolean;   
+  hasError: boolean;
 }
 
 class Portal extends React.Component<IPortalProps, IState> {
+  errorBoundaryRef: any = null;
   public pnp: PNP;
   public store:any;
+  public utilsFunction: UtilsFunctions;
   
   constructor(props: any) {
     super(props);
@@ -89,23 +96,31 @@ class Portal extends React.Component<IPortalProps, IState> {
       urlDesarrollo: "",
       Version: null,
       macroProcesos: [],
-      parametrosTecnicos: [],
       isLoading: true,      
+      hasError: false,
     };
 
-    this.pnp = new PNP(props.context);       
+    this.pnp = new PNP(props.context);
+    this.utilsFunction = new UtilsFunctions();     
   }
 
 
   public componentDidMount() {
-    this.loadContextSite();
-    this.props.loadParametros(this.props.context);
-    
-    var pkg = require("../../../../config/package-solution.json");
+    try{                
+        this.loadContextSite();
+        
+        this.props.loadParametros(this.props.context);       
+      
+        var pkg = require("../../../../config/package-solution.json");
 
-    this.setState({
-      Version: pkg["solution"]["version"],
-    });
+        this.setState({
+          Version: pkg["solution"]["version"],
+        });
+    }
+    catch(error)
+    {
+      this.setState({ hasError: true });
+    }
     
   }
 
@@ -114,6 +129,8 @@ class Portal extends React.Component<IPortalProps, IState> {
     const observer = (parameter: any) => {};
 
     this.pnp.addObserver(observer);
+    await this.props.loadterms(this.props.context);
+       
 
     await this.pnp.getCurrentUser().then((user) => {
       this.setState(
@@ -124,18 +141,32 @@ class Portal extends React.Component<IPortalProps, IState> {
           IsSiteAdmin: user.IsSiteAdmin,
         },
         () => {
+
           this.identificarSitio(
             this.props.context.pageContext.web.absoluteUrl,
             this.props.context.pageContext.site.absoluteUrl,
             user.Id
+          );          
+          
+          this.props.loadUser(this.props.context, user.Id).then(() =>{      
+            if (this.props.userDetail)
+            {                
+
+              this.setState({
+                sigla: this.props.sitio.sitio,
+                Rol: this.props.userDetail.rol,
+                paisActual: this.props.userDetail.pais,
+                Apros: this.props.userDetail.apros,
+                Gestor: this.props.userDetail.gestor
+              })
+            }
+            }
           );
+
+                              
         }
       );
     });
-
-    this.pnp.getParameters().then((items:any) => {
-      this.setState({parametrosTecnicos: items,isLoading: false});      
-    })
   }
 
   //Funcion que valida si se esta en un subsitio o sitio principal recibe como parametro las url del contexto
@@ -150,7 +181,8 @@ class Portal extends React.Component<IPortalProps, IState> {
         : false;
     
     let sitiopaso = sitioFormateado[sitioFormateado.length - 1].length > 2 ? "NV" :  sitioFormateado[sitioFormateado.length - 1];
-    
+     
+
     this.props.setSiteDetails({
       urlSite: urlPrincipal,
       urlSiteSubsitio: url,
@@ -164,7 +196,7 @@ class Portal extends React.Component<IPortalProps, IState> {
       if(this.props.sitio.urlSitioPrincipal != '')
       {
         this.PaisList(url, urlPrincipal, userId);        
-        this.GetInformacionGC();
+       
       }
     });
            
@@ -173,14 +205,14 @@ class Portal extends React.Component<IPortalProps, IState> {
   //Funcion que consulta los paises(Filiales) para darle funcionalidad a los distintos formularios
   private PaisList(sitioActual: any, sitioRoot: any, userId: any) {
     
-    this.props.loadPaises(this.props.context).then(()=>{
+    this.props.loadPaises(this.props.context, this.state.Rol[0]).then(()=>{
       if(this.props.paises.length > 0)
       {
         var site = sitioActual.split("/");
         
         this.setState(
           {
-            Paises: this.props.paises,
+            Paises: this.props.paises ,
             paisActual: site[site.length - 1],          
           },
           () => {
@@ -195,51 +227,40 @@ class Portal extends React.Component<IPortalProps, IState> {
               }
             } else {
               var site = sitioActual.split("/");
-              var p = this.props.paises.filter((x: { Sigla: any }) =>x.Sigla === site);
+              var p = this.props.paises.filter((x: { Sigla: any }) =>x.Sigla === site[5]);
               
               this.setState({paisActual: site[site.length - 1],
                             paisA: p[0].Nombre_x0020_Pais,
               },()=>{this.props.loadNivelesAprobacion(this.props.context,p[0].ID)});
             }
+            this.GetEstructura();
+            this.GetInformacionGC();
           }
         );
   
       }
-    })
-    
-
-    this.props.loadUser(this.props.context, userId).then(() =>{      
-      if (this.props.userDetail)
-      {
-        console.log(this.props.userDetail);
-
-        this.setState({
-          sigla: this.props.sitio.sitio,
-          Rol: this.props.userDetail.rol,
-          paisActual: this.props.userDetail.pais,
-          Apros: this.props.userDetail.apros,
-          Gestor: this.props.userDetail.gestor
-        },()=>{
-          this.GetEstructura();
-         
-        })
-      }
-      }
-
-    );
-    
-   
+    })   
   }
 
   private esEntero(valor: string): boolean {
-    return valor.indexOf(",") === -1;
-}
+    var cadena = String(valor);
+
+    // Verifica si la cadena contiene ',' o '.'
+    var contieneComa = cadena.indexOf(",") !== -1;
+    var contienePunto = cadena.indexOf(".") !== -1;
+
+    // Si contiene alguno de estos, no es entero
+    return !contieneComa && !contienePunto;
+  }
  
   //Funcion que consulta la estructura  de areas y direcciones y sub areas de cada filial
   private GetEstructura() {
     var ViewXml =      `<FieldRef Name="Nombre_x0020_Direccion"/>
                         <FieldRef Name="Nombre_x0020_Area"/>
-                        <FieldRef Name="Nombre_x0020_Sub_x0020_area"/>`;
+                        <FieldRef Name="Nombre_x0020_Sub_x0020_area"/>
+                        <FieldRef Name="Nombre_x0020_Modelo_x0020_Local"/>
+                        <FieldRef Name="ID_x0020_Modelo_x0020_Base"/>`
+                        ;
 
     var FilterXml =  `<Query>
                         <OrderBy>
@@ -255,68 +276,87 @@ class Portal extends React.Component<IPortalProps, IState> {
     } else {
       sitio = this.props.sitio.urlSiteSubsitio;
     }
+    
 
     if (this.props.sitio.urlSiteSubsitio.length > 0) {
-      this.pnp
-        .getListItemsWithTaxo("", "Modelos Local", ViewXml,FilterXml , sitio)
-        .then((items) => {         
-          var vDirecciones: { ID: any; NombreDireccion: string }[] = [];
-          var vAreas: { ID: any; Direccion: string; NombreArea: string }[] = [];
-          var vSubAreas: { ID: any; Area: string; NombreSubArea: string }[] = [];
-
-          var Direccionesuniq = _.uniq(items, (i: { Nombre_x0020_Direccion: any }) => i.Nombre_x0020_Direccion.Label);
-
-          Direccionesuniq.forEach((d: any) => {
-            if (d.Nombre_x0020_Direccion.Label) {
-              vDirecciones.push({ ID: d.ID, NombreDireccion: d.Nombre_x0020_Direccion.Label });
-          
-              var AreaAux = items.filter(
-                (x: { Nombre_x0020_Direccion: any }) => x.Nombre_x0020_Direccion.Label === d.Nombre_x0020_Direccion.Label
-              );
-          
-              var Areasuniq = _.uniq(AreaAux, (i: { Nombre_x0020_Area: any }) => i.Nombre_x0020_Area.Label);
-              
-              Areasuniq.forEach((a: any) => {                
-                if (a.Nombre_x0020_Area.Label && !this.esEntero(a.Orden_x0020_Home)) {
-                  vAreas.push({
-                    ID: a.ID,
-                    Direccion: d.Nombre_x0020_Direccion.Label,
-                    NombreArea: a.Nombre_x0020_Area.Label,
-                  });
-          
-                  // Aquí comenzamos a procesar las subáreas
-                  var SubAreaAux = items.filter((x: { Nombre_x0020_Area: any }) => x.Nombre_x0020_Area.Label === a.Nombre_x0020_Area.Label);
-          
-                  var SubAreasuniq = _.uniq(SubAreaAux, (i: { Nombre_x0020_Sub_x0020_area: any }) => i.Nombre_x0020_Sub_x0020_area.Label);
-          
-                  SubAreasuniq.forEach((sa: any) => {
-                    if (sa.Nombre_x0020_Sub_x0020_area.Label) {
-                      vSubAreas.push({
-                        ID: sa.ID,
-                        Area: a.Nombre_x0020_Area.Label,
-                        NombreSubArea: sa.Nombre_x0020_Sub_x0020_area.Label,
-                      });
-                    }
-                  });
-                }
-              });
-            }
-          });
-
-          this.setState(
-            {
-              Direcciones: vDirecciones,
-              Areas: vAreas,
-              SubAreas: vSubAreas,
-              fullLoad: true,
-              
-            }
-          );
+      let itemsResultado:any;
+      if(this.state.Rol[0] =="Lector")
+      {
+        this.utilsFunction.GetItems({"SiteName": this.state.sigla, "ListName":"Modelos Local"}).then((items) =>{
+          itemsResultado = items;
+          this.ProcessEstructura(itemsResultado);
         });
-       
+      }
+      else
+      {
+        this.pnp.getListItemsWithTaxo("", "Modelos Local", ViewXml,FilterXml , sitio).then((items) => {      
+          itemsResultado =  items;
+          this.ProcessEstructura(itemsResultado);      
+          
+        }).catch((error:any) => {this.setState({hasError:true})});                  
+      }    
     }
   }
 
+  private ProcessEstructura(itemsResultado:any){
+    
+    if(itemsResultado.length >0)
+    {
+      var vDirecciones: { ID: any; NombreDireccion: string ,NombreDireccion2: string }[] = [];
+        var vAreas: { ID: any; Direccion: string; NombreArea: string }[] = [];
+        var vSubAreas: { ID: any; Area: string; NombreSubArea: string }[] = [];
+
+        var Direccionesuniq = _.uniq(itemsResultado, (i: { Nombre_x0020_Direccion: any }) => i.Nombre_x0020_Direccion.Label);
+
+        Direccionesuniq.forEach((d: any) => {
+          if (d.Nombre_x0020_Direccion.Label) {
+            vDirecciones.push({ ID: d.ID_x0020_Modelo_x0020_Base, NombreDireccion: d.Nombre_x0020_Modelo_x0020_Local, NombreDireccion2: d.Nombre_x0020_Direccion.Label});
+        
+            var AreaAux = itemsResultado.filter(
+              (x: { Nombre_x0020_Direccion: any }) => x.Nombre_x0020_Direccion.Label === d.Nombre_x0020_Direccion.Label
+            );
+            
+            var Areasuniq = _.uniq(AreaAux, (i: { Nombre_x0020_Area: any }) => i.Nombre_x0020_Area.Label);            
+                                 
+            Areasuniq.forEach((a: any) => {                                    
+              if (a.Nombre_x0020_Area.Label && !this.esEntero(a.Orden_x0020_Home)) {                                
+              
+                vAreas.push({
+                  ID: a.ID_x0020_Modelo_x0020_Base,
+                  Direccion: d.Nombre_x0020_Direccion.Label,
+                  NombreArea: a.Nombre_x0020_Area.Label,
+                });
+                         
+                // Aquí comenzamos a procesar las subáreas
+                var SubAreaAux = itemsResultado.filter((x: { Nombre_x0020_Area: any }) => x.Nombre_x0020_Area.Label === a.Nombre_x0020_Area.Label);
+               
+                var SubAreasuniq = _.uniq(SubAreaAux, (i: { Nombre_x0020_Sub_x0020_area: any }) => i.Nombre_x0020_Sub_x0020_area?.Label);                
+                SubAreasuniq.forEach((sa: any) => {
+                  if (sa.Nombre_x0020_Sub_x0020_area?.Label) {
+                    vSubAreas.push({
+                      ID: sa.ID_x0020_Modelo_x0020_Base,
+                      Area: a.Nombre_x0020_Area.Label,
+                      NombreSubArea: sa.Nombre_x0020_Sub_x0020_area.Label,
+                    });
+                  }
+                });
+              }
+            });
+          }
+        });      
+
+        this.setState(
+          {
+            Direcciones: vDirecciones,
+            Areas: vAreas,
+            SubAreas: vSubAreas,
+            fullLoad: true,
+            
+          }
+        );
+    }
+  }
+  
   private GetInformacionGC()
   { 
     let pSigla = "";
@@ -325,8 +365,23 @@ class Portal extends React.Component<IPortalProps, IState> {
   
    this.state.sitio == this.props.sitio.sitioPrincipal.toUpperCase() ? pSigla="" :  pSigla = this.state.sitio;      
 
-    this.pnp.getMenuInfoFC(pSigla).then((items) => {      
-      this.setState({infoMenus: items},()=>{this.GetMacroProcesos();});
+    this.pnp.getMenuInfoFC(pSigla,this.state.Rol[0]).then((items) => { 
+     
+
+      items.sort((a:any, b:any) => a.Ordenamiento - b.Ordenamiento);
+      let filter = [];
+
+      if(this.props.userDetail.rol.find((x:any) => x === "Lector"))
+      {
+        filter = items.filter((x:any) => x.Vista_x0020_Publico === true);
+      }
+      else
+      {
+        filter = items;
+      }
+           
+      
+      this.setState({infoMenus: filter},()=>{this.GetMacroProcesos();});
     });   
   }
 
@@ -336,18 +391,24 @@ class Portal extends React.Component<IPortalProps, IState> {
 
     this.state.sitio == this.props.sitio.sitioPrincipal.toUpperCase() ? pSigla="" :  pSigla = this.state.sitio;    
 
-    this.pnp.getMacroProcesos(pSigla).then((items) => {
-      this.setState({macroProcesos: items});
+    this.pnp.getMacroProcesos(pSigla, this.state.Rol[0]).then((items) => {
+      this.setState({macroProcesos: items});      
     });
 
   }
 
   public render(): React.ReactElement<IPortalProps> {
     const {parametros, sitio} = this.props;    
-          
+    
+    if (this.state.hasError) {      
+      throw new Error('Error cargando Portal');
+    }
+
     return (     
-      <section>                
-      {this.state.fullLoad ? (       
+      <section>
+      <ErrorBoundary>                
+      {this.state.fullLoad ? (   
+            
         <HashRouter basename={"/"}>          
           <div id="kt_body" className={this.state.fullPages
                 ? "header-fixed header-tablet-and-mobile-fixed toolbar-enabled fullPages"
@@ -357,8 +418,8 @@ class Portal extends React.Component<IPortalProps, IState> {
               <div className="page d-flex flex-row flex-column-fluid">
                 <div className="wrapper d-flex flex-column flex-row-fluid" id="kt_wrapper">
                   <ErrorBoundary>
-                  <Header 
-                    titulo={parametros.filter((elemento:any) => elemento.Llave === "TituloGestiondelConocimiento")[0].Valor}
+                  <Header
+                    titulo = {(parametros.filter((elemento: any) => elemento.Llave === "TituloGestiondelConocimiento")[0] ?? {}).Valor}                    
                     urlSiteSubsitio={sitio.urlSiteSubsitio} 
                     sigla={this.state.sigla}
                     sitioPrincpal={sitio.urlSite}
@@ -381,15 +442,15 @@ class Portal extends React.Component<IPortalProps, IState> {
                       <Route exact path="/" component={() => (
                         <ErrorBoundary>
                           <Home
-                            context={this.props.context}
+                            webPartContext={this.props.context}
                             paisActual={this.state.paisA}
                             urlSite={sitio.urlSiteSubsitio}
                             userId={this.state.UserId}
                             Direcciones={this.state.Direcciones}
                             Areas={this.state.Areas}
                             SubAreas={this.state.SubAreas}
-                            gestores={this.state.Gestor}
-                            linkIntranet={parametros.filter((elemento:any) => elemento.Llave === "linkIntranet" + this.state.sigla)[0].Valor}
+                            gestores={this.state.Gestor}                            
+                            linkIntranet={(parametros.filter((elemento: any) => elemento.Llave === "linkIntranet")[0] ?? {}).Valor} 
                           
                           />
                         </ErrorBoundary>
@@ -414,7 +475,7 @@ class Portal extends React.Component<IPortalProps, IState> {
                       ></Route>
                       <Route
                         exact
-                        path="/Visor/:direccion?/:IdVisor?/:SubArea?/"
+                        path="/Visor/:IDModelo?/"
                         component={() => (
                           <ErrorBoundary>
                           <Visor
@@ -424,15 +485,18 @@ class Portal extends React.Component<IPortalProps, IState> {
                             NombreSubsitio={sitio.sitio}
                             SitioSigla={this.state.sitioSigla}
                             paisActual={this.state.sigla}
-                          ></Visor></ErrorBoundary>
+                          ></Visor>
+                          </ErrorBoundary>
                         )}
                       ></Route>
                       <Route
                         exact
                         path="/Resultados/:q?"
-                        component={() => (
+                        render={(routeProps) => (
                           <ErrorBoundary>
-                          <ResultadosBuscador                                    
+                          <ResultadosBuscador
+                            key={routeProps.match.params.q || 'defaultKey'}
+                            {...routeProps}                                    
                             webPartContext={this.props.context}
                             paisActual={this.state.paisA}
                             urlSite={sitio.urlSite}
@@ -449,34 +513,87 @@ class Portal extends React.Component<IPortalProps, IState> {
                       ></Route>
                       <Route
                         exact
-                        path="/CrearContenido/:Acceso?/:opcion?/:IdMecanismo?/:IdDriver?"
+                        path={"/FormularioCreacion/:Acceso?/:IdMecanismo?/:opcion?/:IdDriver?"}
                         component={() => (
                           <ErrorBoundary>
                           <CrearContenido
                             Titulo="CrearContenido"
                             currentUser={this.state.currentUser}
                             urlSitioPrincipal={sitio.urlSite}
-                            context={this.props.context}
+                            webPartContext={this.props.context}
                             Subsitio={sitio.estadoSitio}
                             NombreSubsitio={sitio.sitio}
                             Direcciones={this.state.Direcciones}
                             Areas={this.state.Areas}
                             SubAreas={this.state.SubAreas}
+                            opcion = {undefined}
                           /></ErrorBoundary>
                         )}
                       ></Route>
-                       <Route exact path='/Aprobaciones'
+
+                      <Route
+                        exact path="/Crear"
+                        component={() => (
+                          <ErrorBoundary>
+                          <CrearContenidoN
+                            Titulo="CrearContenido"
+                            currentUser={this.state.currentUser}
+                            urlSitioPrincipal={sitio.urlSite}
+                            webPartContext={this.props.context}
+                            Subsitio={sitio.estadoSitio}
+                            NombreSubsitio={sitio.sitio}
+                            Direcciones={this.state.Direcciones}
+                            Areas={this.state.Areas}
+                            SubAreas={this.state.SubAreas}
+                            opcion = {undefined}
+                          /></ErrorBoundary>
+                        )}
+                      ></Route>
+                       <Route exact path='/GestionSolicitudes'
                           component={() => (
                             <ErrorBoundary>
-                            <Aprobaciones 
-                              context={this.props.context}
+                            <Aprobaciones
+                              Webpartcontext={this.props.context}
                               currentUser={this.state.UserId}
                               Sigla={this.state.sigla}
                               Direcciones = {this.state.Direcciones}
-                              Areas = {this.state.Areas}                                                        
+                              Areas = {this.state.Areas}
+                              Modal = {false}                                                       
                               /></ErrorBoundary>
                         )}>
                       </Route>
+
+                      <Route exact path='/Componentes'
+                          component={() => (
+                            <ErrorBoundary>
+                            <Componentes
+                              Webpartcontext={this.props.context}
+                              currentUser={this.state.UserId}
+                              Sigla={this.state.sigla}
+                              Direcciones = {this.state.Direcciones}
+                              Areas = {this.state.Areas}
+                              Modal = {false}                                                       
+                              /></ErrorBoundary>
+                        )}>
+                      </Route>
+
+                      <Route
+                        exact
+                        path="/Mecanismos/:IdMecanismo?"
+                        component={() => (
+                          <ErrorBoundary>
+                            <ModeloMecanismo 
+                             context= {this.props.context}
+                             userId= ""
+                             funTabla= ""
+                             estadoTablaModelo= ""
+                             SetEstadoTablaModelo= ""
+                             ficha= "" 
+                            />
+                          </ErrorBoundary>
+                        )}
+                      ></Route>
+
                       <Route exact path='/ComentarDocumentos/:IdMecanismo?'
                         component={() => (
                           <ErrorBoundary>
@@ -526,7 +643,7 @@ class Portal extends React.Component<IPortalProps, IState> {
           </div>
         </HashRouter>       
         ) : null}
-         
+        </ErrorBoundary>
       </section>
     );
   }
@@ -539,7 +656,8 @@ const mapStateToProps = (state:any) => {
     sitio: state.sitio,
     paises: state.paises.paises,
     userDetail: state.userDetail.userDetail,
-    niveles: state.nivelAprobacion.nivelAprobacion
+    niveles: state.nivelAprobacion.nivelAprobacion,
+    terms: state.terms.terms
   };
 };
 
@@ -547,9 +665,10 @@ const mapDispatchToProps = (dispatch:any) => {
   return {
       loadParametros: (context:any) => dispatch(loadParametros(context)),
       setSiteDetails: (data:any) => dispatch(setSiteDetails(data)),
-      loadPaises: (context:any) => dispatch(loadPaises(context)),
+      loadPaises: (context:any, rol:string) => dispatch(loadPaises(context,rol)),
       loadUser: (context:any,id:number) => dispatch(loadUser(context,id)),
-      loadNivelesAprobacion: (context:any,id:number) => dispatch(loadNivelAprobacion(context,id))     
+      loadNivelesAprobacion: (context:any,id:number) => dispatch(loadNivelAprobacion(context,id)),
+      loadterms: (context:any) => dispatch(loadterms(context))     
   };
 }
 

@@ -16,7 +16,7 @@ export const fetchPaisesFailure = (error:any) => ({
   payload: error
 });
 
-export const loadPaises = (context:any) => {
+export const loadPaises = (context:any, rol:string) => {
   return async (dispatch:any, getState:any) => {
     const currentData = getState().paises.paises;
         
@@ -28,8 +28,7 @@ export const loadPaises = (context:any) => {
     
     try {
       const pnp = new PNP(context);
-      const data = await pnp.getListItemsRoot("Paises",["*"],"","");
-      console.log(data);
+      const data = await pnp.getPaises();
       
       dispatch(fetchPaisesSuccess(data));
      

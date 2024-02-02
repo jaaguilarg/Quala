@@ -1,11 +1,14 @@
 import * as React from "react";
 import { Link, withRouter } from "react-router-dom";
 import { PNP } from "../Util/util";
-import {spfi} from "@pnp/sp";
-import MecanismoItem, {Mecanismo} from "../Views/MecanismoItem";
-import ModelMecanismo from "../Views/ModelMecanismo";
+import { spfi } from "@pnp/sp";
+//import MecanismoItem, {Mecanismo} from "../Views/MecanismoItem";
+//import ModelMecanismo from "../Views/ModelMecanismo";
 import { connect } from 'react-redux';
-
+//import { ErrorBoundary } from "../Util/ErrorBoundary";
+import FichaModal from '../Views/fichaModal'
+//import GestoresMenu from "../Views/GestoresMenu";
+import SVGIconComponent from "../Util/SVGIcon";
 
 export interface IPilaresProps {
   Titulo: any;
@@ -27,20 +30,27 @@ export interface IPilaresProps {
   NombreMecanismo: any;
   Seguridad: any;
   Acceso: any;
-  numeroPilar:any;
-  paramatros:any;
-  sitio:any
+  numeroPilar: any;
+  parametros: any;
+  sitio: any;
+  userDetail:any;
+  paises:any
 }
 
 class Pilares extends React.Component<IPilaresProps, any> {
   public pnp: PNP;
-  public mecanismo: Mecanismo;
+  //public mecanismo: Mecanismo;
 
   constructor(props: any) {
     super(props);
-    this.mecanismo = {} as Mecanismo;
+    //this.mecanismo = {} as Mecanismo;
     this.pnp = new PNP(this.props.Webpartcontext);
     this.closeModal = this.closeModal.bind(this);
+    this.TablaModelo = this.TablaModelo.bind(this);
+    this.SetEstadoTablaModelo = this.SetEstadoTablaModelo.bind(this);
+    this.getMecanismo = this.getMecanismo.bind(this);
+    this.openModal = this.openModal.bind(this)
+
     this.state = {
       Gestor: [],
       Usuario: "",
@@ -52,7 +62,7 @@ class Pilares extends React.Component<IPilaresProps, any> {
       IdPilar: "",
       infoDrivers: [],
       estadoAcordeon: 0,
-      estadoModal: false,
+      estadoModal: true,
       documentosMecanismo: [],
       mecanismos: [],
       MecanismosdelDriver: [],
@@ -64,210 +74,246 @@ class Pilares extends React.Component<IPilaresProps, any> {
       pilar: "",
       driver: "",
       ficha: [],
-      gestores: [],
+      gestores: 0,
       Lector: [],
       linkMapaMecanismo: "",
       PilaresTotal: [],
       DriversTotal: [],
       urlSitio: "",
-      NombreModelo:"",
-      AreaNombre:"",
-      DireccionNombre:"",
-      SubAreaNombre:"",
-      Pilar:"",
-      NumeroPilar:"",
-      urlImgPilar:""
+      NombreModelo: "",
+      AreaNombre: "",
+      DireccionNombre: "",
+      SubAreaNombre: "",
+      Pilar: "",
+      NumeroPilar: "",
+      urlImgPilar: "",
+      hasError: false,
+      parametros:this.props.parametros,
+      descripcionSitio:this.props.sitio,
+      usuario:this.props.userDetail,
+      paises:this.props.paises,
+      BtnMapaMecanismo:"",
+      NombrePais:"",
+      pilarExiste:true
+    
+
     };
   }
 
-//Funcion para identificar los numeros de los pilares
-  public NumeroPilares(IdModeloLocal:number){
+  //Funcion para identificar los numeros de los pilares
+  public NumeroPilares(IdModeloLocal: number) {
     this.pnp.getListItems("Pilares Local",
-                          ["No_x0020_Pilar,ID"],  
-                          "Habilitado eq  1 and ID_x0020_Modelo_x0020_Local eq " + IdModeloLocal,
-                          "",
-                          "").then((items)=>{
+      ["No_x0020_Pilar,ID"],
+      "Habilitado eq  1 and ID_x0020_Modelo_x0020_Local eq " + IdModeloLocal,
+      "",
+      "").then((items) => {
 
-                            try{
-                              this.setState({
-                                NumerosPilares:items
+        try {
+          this.setState({
+            NumerosPilares: items
 
-                              })
+          })
 
-                            }catch(error){
+        } catch (error) {
 
-                            }
-                            console.log("numeropilares")
-                            console.log(items)
-                          })
+        }
+      })
 
   }
 
 
+  //Nueva Funcion que pinta la miga de pan y consulta informacion inicial de los pilares
+  public consultapilar(ID?: any) {
+    var numeroPilar: 0
 
-//Nueva Funcion que pinta la miga de pan y consulta informacion inicial de los pilares
-  public consultapilar(ID?:any){
-    var numeroPilar:0
+    numeroPilar = ID || this.props.match.params.numeroPilar || this.props.numeroPilar || 1
 
-    if(ID>0){
-      numeroPilar=ID
-    }else{
-      numeroPilar=this.props.match.params.numeroPilar
- 
-    }
+
     this.pnp.getListItems(
       "Pilares Local",
-      ["*","ID_x0020_Modelo_x0020_Local/Nombre_x0020_Modelo_x0020_Local"],
-      "Habilitado eq  1 and ID eq " + numeroPilar,
+      ["*", "ID_x0020_Modelo_x0020_Local/Nombre_x0020_Modelo_x0020_Local"],
+      "Habilitado eq 1 and ID eq " + numeroPilar,
       "ID_x0020_Modelo_x0020_Local"
-    ).then((items)=>{
+    ).then((items) => {
 
 
-      try{
+      if(items.length<=0){
+        this.setState({
+          pilarExiste :false
+        })
+      }
+      var ViewXml = `<FieldRef Name="Nombre_x0020_Direccion"/>
+                        <FieldRef Name="Nombre_x0020_Area"/>
+                        <FieldRef Name="Nombre_x0020_Sub_x0020_area"/>
+                        <FieldRef Name="Vinculo_x0020_Mapa_x0020_Mecanis"/>
+                        <FieldRef Name="Vinculo_x0020_Portada_x0020_Mode"/>
+                        `;
 
-        var ViewXml =      `<FieldRef Name="Nombre_x0020_Direccion"/>
-                            <FieldRef Name="Nombre_x0020_Area"/>
-                            <FieldRef Name="Nombre_x0020_Sub_x0020_area"/>`;
-
-        var IDDC=items[0].ID_x0020_Modelo_x0020_LocalId
-        this.NumeroPilares(IDDC)
-        var FilterXml =  `<Query>
+      var IDDC = items[0].ID_x0020_Modelo_x0020_LocalId
+      this.NumeroPilares(IDDC)
+      var FilterXml = `<Query>
                             <Where>
-
                               <Eq>
                                   <FieldRef Name='ID'></FieldRef>
-                                  <Value Type="Number">`+IDDC+`</Value>
+                                  <Value Type="Number">`+ IDDC + `</Value>
                               </Eq>
                             </Where>                       
                           </Query> `
       this.setState({
         NombreModelo: items[0].ID_x0020_Modelo_x0020_Local.Nombre_x0020_Modelo_x0020_Local,
-        Pilar:items[0].Pilar,
-        NumeroPilar:items[0].No_x0020_Pilar,
-        urlImgPilar:this.props.sitio.urlSitioPrincipal+"/SiteAssets/Root/Pilar"+items[0].No_x0020_Pilar+".png"
+        Pilar: items[0].Pilar,
+        NumeroPilar: items[0].No_x0020_Pilar,
+        urlImgPilar: this.props.sitio.urlSitioPrincipal + "/ActivosGC/Root/Pilar" + items[0].No_x0020_Pilar + ".png"
 
-      },()=>{
-       this.pnp.getListItemsWithTaxo('',"Modelos Local",ViewXml,FilterXml,"").then((items)=>{
-        this.setState({
-          AreaNombre:items[0].Nombre_x0020_Area.Label,
-          DireccionNombre:items[0].Nombre_x0020_Direccion.Label,
-          SubAreaNombre:items[0].Nombre_x0020_Sub_x0020_area.Label
+      }, () => {
+        this.pnp.getListItemsWithTaxo('', "Modelos Local", ViewXml, FilterXml, "").then((items) => {
+          this.setState({
+            AreaNombre: items[0].Nombre_x0020_Area.Label,
+            DireccionNombre: items[0].Nombre_x0020_Direccion.Label,
+            SubAreaNombre: items[0].Nombre_x0020_Sub_x0020_area.Label,
+            linkMapaMecanismo:items[0].Vinculo_x0020_Mapa_x0020_Mecanis,
+            modeloActual:items[0].ID
 
-        },()=>{
-          this.consultarDriver()
-        })
-       })
+          }, () => {
+            this.consultarDriver()
+          })
+        }).catch(() => { this.setState({ hasError: true }) });
       })
 
-      }catch(error){
+    }).catch(() => { this.setState({ hasError: true }) });
 
-      }
+  }
 
+
+
+  public consultaRoles(){
+    
+    var paises = this.state.paises.filter(
+      (x: { Sigla: any }) => x.Sigla == this.state.descripcionSitio.sitio 
+    );
+
+
+    this.setState({
+      NombrePais:paises[0].Nombre_x0020_Pais
     })
+
+
+    var btnMecanismo=this.state.parametros.filter((x:{Llave:any})=>x.Llave == "BotonMapadeMecanismos")
+    var tituloPilar=this.state.parametros.filter((x:{Llave:any})=>x.Llave == "LabelPilares")
+    var DriverOPeraciones=this.state.parametros.filter((x:{Llave:any})=>x.Llave == "LabelDriversOperacionales")
+    var Mecanismo=this.state.parametros.filter((x:{Llave:any})=>x.Llave == "LabelMECANISMO")
+    var OtrosMecanismo=this.state.parametros.filter((x:{Llave:any})=>x.Llave == "TerminoOtrosmecanismosOperacionales")
+
+      this.state.usuario.paises.forEach((element:any)=>{
+
+        if(element == paises[0].ID && this.state.usuario.gestor){
+          this.setState({
+
+            gestores: 1,
+            BtnMapaMecanismo:btnMecanismo[0].Valor,
+            tituloPilares:tituloPilar[0].Valor,
+            TituloDriverO:DriverOPeraciones[0].Valor,
+            TituloMecanismo:Mecanismo[0].Valor,
+            TituloOtrosm:OtrosMecanismo[0].Valor
+
+
+          },()=>{
+            this.consultapilar()
+
+          })
+          
+        }else{
+          this.setState({
+            BtnMapaMecanismo:btnMecanismo
+
+          },()=>{
+            this.consultapilar()
+
+          })
+          
+        }
+
+      })
 
   }
 
 
   public componentDidMount() {
-    this.consultapilar()
-  
 
-    if(this.props.NombreMecanismo !== undefined && this.props.Seguridad !== undefined)
-    {
-      this.ObtenerArchivos(this.props.match.params.NombreMecanismo,this.props.match.params.Seguridad),
+
+    this.consultaRoles()
+
+    if (this.props.NombreMecanismo !== undefined && this.props.Seguridad !== undefined) {
       this.consultarFicha();
-      this.setState({estadoModal: true,});
+      this.setState({ estadoModal: true, });
     }
 
-    if (this.props.match.params.NombreMecanismo !== undefined && this.props.match.params.Seguridad !== undefined) 
-    {
-      this.ObtenerArchivos(this.props.match.params.NombreMecanismo,this.props.match.params.Seguridad),
+    if (this.props.match.params.NombreMecanismo !== undefined && this.props.match.params.Seguridad !== undefined) {
       this.consultarFicha();
-      this.setState({estadoModal: true,});
+      this.setState({ estadoModal: true, });
     } else {
+      this.setState({ estadoModal: false, });
       this.loadContextSite();
-      this.consultarPilares(this.props.match.params.NumeroPilar);
+      //this.consultarPilares(this.props.match.params.NumeroPilar);
       this.consultarModelo();
       this.ConsultaTotalDrivers();
       this.ConsultaTotalPilares();
+      this.consultarFicha();
     }
-
-
-
-
   }
 
   // funcion para consulta de modelos
-  private consultarModelo() {   
-    this.pnp.consultarModelo(this.props.SitioSigla,this.props.match.params.direccion,this.props.match.params.SubArea,this.props.match.params.IdVisor).then((items: any[]) =>{
-                     
+  private consultarModelo() {
+
+    const _direccion = this.props.match.params.direccion || this.props.Direccion;
+    const _idVisor = this.props.match.params.IdVisor || this.props.IdVisor;
+
+    this.pnp.consultarModelo(this.props.SitioSigla, _direccion, this.props.match.params.SubArea, _idVisor).then((items: any[]) => {
+
       let url: string = "";
       var item = items[0];
-      
+
       url = item.Vinculo_x0020_Portada_x0020_Mode.split("action")[0] + "action=embedview&amp;wdAr=1.7777777777777777";
-                     
-        this.setState({
-          linkMapaMecanismo: item.Vinculo_x0020_Mapa_x0020_Mecanis,
-          VisorOk: this.props.match.params.IdVisor + "/" + this.props.match.params.SubArea,
-          UrlPresentacion: '<iframe src="' + url + '" width="100%" height="600px" ></iframe>'
-        }, () => {  });                           
-    });   
+
+      this.setState({
+        linkMapaMecanismo: item.Vinculo_x0020_Mapa_x0020_Mecanis,
+        VisorOk: this.props.match.params.IdVisor + "/" + this.props.match.params.SubArea,
+        UrlPresentacion: '<iframe src="' + url + '" width="100%" height="600px" ></iframe>'
+      }, () => { });
+    }).catch(() => { this.setState({ hasError: true }) });
   }
 
   // funcion para consultar ficha
   private consultarFicha() {
-    this.pnp
-      .getListItems(
-        "Mecanismos Local",
-        ["Nombre_x0020_Mecanismo_x0020_Loc", "Mecanismos_x0020_AsociadosId"],
-        "Nombre_x0020_Mecanismo_x0020_Loc eq '" + this.state.NombreMecanismo + "'",
-        ""
-      )
+
+    this.pnp.getListItems(
+      "Mecanismos Local",
+      ["ID", "ID_x0020_Driver_x0020_Local/Nombre_x0020_Driver", "Nombre_x0020_Mecanismo_x0020_Loc", "Mecanismos_x0020_AsociadosId", "Nombre_x0020_Pilar", "Nombre_x0020_Modelo"],
+      'ID eq ' + this.state.Idmecanismo,
+      "ID_x0020_Driver_x0020_Local"
+    )
       .then((items: any) => {
         if (items.length > 0) {
-          items[0].Mecanismos_x0020_AsociadosId.forEach((val: any) => {this.consultarFicha2(val);});
+          var ficha = this.state.ficha;
+
+          items.forEach((item: any) => {
+
+            var fichaAux = {
+              NombreDriver: item.ID_x0020_Driver_x0020_Local.Nombre_x0020_Driver,
+              NombrePilar: item.Nombre_x0020_Pilar,
+              NombreModelo: item.Nombre_x0020_Modelo,
+              NombreMecanismo: item.Nombre_x0020_Mecanismo_x0020_Loc
+            };
+
+            ficha.push(fichaAux);
+          });
+
+          console.log(ficha);
+
+          this.setState({ ficha: ficha })
+
         }
-      });
-  }
-
-  // funcion para consulta de ficha completa por pilares
-  private consultarFicha2(IdMecanismo: any) {
-    var thisCurrent = this;
-
-    this.pnp
-      .getListItems("Mecanismos Local",
-        ["ID", "Pilar", "Nombre_x0020_Mecanismo_x0020_Loc", "ID_x0020_Driver_Local"],
-        "ID eq '" + IdMecanismo + "'",
-        "")
-      .then((items: any) => {
-        if (items.length > 0) {
-
-          var ficha = thisCurrent.state.ficha;
-
-          if (items.length > 0) {
-            var fichaAux = {NombreDriver: "",NombrePilar: "",NombreModelo: "",NombreMecanismo: items[0].NombreMecanismo,};
-
-            var driver = thisCurrent.state.DriversTotal.filter(
-              (x: { ID: any }) => x.ID == items[0].NombreDriverId
-            );
-
-            if (driver.length > 0) {
-              if (driver[0].NombreDriver != "No aplica") {
-                fichaAux["NombreDriver"] = driver[0].NombreDriver;
-
-                var pilard = thisCurrent.state.PilaresTotal.filter((x: { ID: any }) => x.ID == driver[0].PilarId);
-                if (pilard.length > 0) {
-                  fichaAux["NombrePilar"] = pilard[0].Pilar;
-                  fichaAux["NombreModelo"] = pilard[0].NombreModelo.NombreModelo;
-                  ficha.push(fichaAux);
-                }
-              }
-            }
-          }
-
-          thisCurrent.setState({ficha: ficha,});
-        }
-      });
+      }).catch(() => { this.setState({ hasError: true }) });
   }
 
   // funcion para consulta de pilares
@@ -277,112 +323,111 @@ class Pilares extends React.Component<IPilaresProps, any> {
         "Pilares Local",
         ["ID", "Pilar", "ID_x0020_Modelo_x0020_Local/Nombre_x0020_Modelo_x0020_Local"],
         "",
-        "ID_x0020_Modelo_x0020_Local","",0,this.props.SitioSigla
+        "ID_x0020_Modelo_x0020_Local", "", 0, this.props.SitioSigla
       )
       .then((items: any) => {
         this.setState({
           PilaresTotal: items,
         });
-      });
+      }).catch(() => { this.setState({ hasError: true }) });
   }
 
   // funcion para consultar drivers
   private ConsultaTotalDrivers() {
     this.pnp
-      .getListItems("Drivers Local", ["ID", "Nombre_x0020_Driver", "ID_x0020_Pilar_x0020_LocalId"], "","","",0,this.props.SitioSigla)
+      .getListItems("Drivers Local", ["ID", "Nombre_x0020_Driver", "ID_x0020_Pilar_x0020_LocalId"], "", "", "", 0, this.props.SitioSigla)
       .then((items: any) => {
         this.setState({
           DriversTotal: items,
         });
-      });
+      }).catch(() => { this.setState({ hasError: true }) });
   }
   // funcion del estado de la tabla modelo
   public TablaModelo() {
-    this.consultarFicha();
-    this.setState({estadoTablaModelo: true,});
+    this.setState({ estadoTablaModelo: true, });
   }
+
+  public SetEstadoTablaModelo() {
+    this.setState({ estadoTablaModelo: !this.state.estadoTablaModelo });
+  }
+
   // Funcion para consultar los archivos del mecanismo
   public ObtenerArchivos(NombreMecanismo: any, Seguridad: any) {
-    this.setState({
-      NombreMecanismo: NombreMecanismo,
-    });
 
-    if (
-      this.props.match.params.direccion !== undefined &&
-      this.props.match.params.IdVisor == undefined
-    ) {
-      var direccion = this.props.match.params.direccion;
-      this.pnp
-        .getFiles("Publicado/" + Seguridad + "/" + direccion + "/" + NombreMecanismo)
-        .then(
-          (res) => (            
-            this.setState(
-              {
-                documentosMecanismo: res,
-              },
-              () => {
-                if (this.state.documentosMecanismo.length > 0) {
-                  this.openModal();
-                  this.setState({btnCrearMecanismo: false,
-                  });
-                } else {
-                  this.setState({
-                    btnCrearMecanismo: true,
-                  });
-                }
+
+    const _direccion = this.props.Direccion || this.state.DireccionNombre;
+    const _idVisor = this.props.IdVisor;
+
+    if (_idVisor == undefined) {
+
+      this.pnp.getFiles("Publicado/" + Seguridad + "/" + _direccion + "/" + NombreMecanismo).then(
+        (res) => (
+          this.setState(
+            {
+              documentosMecanismo: res,
+            },
+            () => {
+              if (this.state.documentosMecanismo.length > 0) {
+                this.openModal();
+                this.setState({ btnCrearMecanismo: false, });
+              } else {
+                this.setState({ btnCrearMecanismo: true, });
               }
-            )
+            }
           )
-        );
+        )
+      ).catch(() => { this.setState({ hasError: true }) });
     } else {
-
-      // var UbicacionArchivos = this.props.match.params.IdVisor.replace(' ', '_')
       this.pnp
-        .getFiles("Publicado/" + Seguridad + "/" +  this.props.match.params.IdVisor + "/" + NombreMecanismo)
-        .then((res) => (            
-            this.setState({documentosMecanismo: res},
-              () => {
-                if (this.state.documentosMecanismo.length > 0) {
-                  this.openModal();
-                  this.setState({btnCrearMecanismo: false});
-                } else {
-                  this.setState({btnCrearMecanismo: true});
-                }
+        .getFiles("Publicado/" + Seguridad + "/" + _idVisor + "/" + NombreMecanismo)
+        .then((res) => (
+          this.setState({ documentosMecanismo: res },
+            () => {
+              if (this.state.documentosMecanismo.length > 0) {
+                this.openModal();
+                this.setState({ btnCrearMecanismo: false });
+              } else {
+                this.setState({ btnCrearMecanismo: true });
               }
-            )
-            )
+            }
+          )
+        )
         );
     }
   }
 
   // Funcion para llamar documentos de los mecanismos al modal
-  private ConsultarMecanismos(Driver: any) {
-    this.pnp
-      .consultarMecanismosByDriver(Driver)
+  private ConsultarMecanismos(Driver: any,acordeon:any) {
+    this.pnp.consultarMecanismosByDriver(Driver)
       .then((res) => {
         
-        var MecanismosdelDriver = res.filter(
+        var filtradoH = res.filter( (x: { Habilitado : any }) => x.Habilitado == "Yes" );
+
+        var MecanismosdelDriver = filtradoH.filter(
           (x: { Mecanismo_x0020_del_x0020_Driver: any }) =>
             x.Mecanismo_x0020_del_x0020_Driver.Label == "Mecanismos del driver"
         );
-        var OtrosMecanismosOperacional = res.filter(
-          (x: { Mecanismo_x0020_del_x0020_Driver: any }) =>
-            x.Mecanismo_x0020_del_x0020_Driver.Label == "Otro Mecanismo Operacional"
+        var OtrosMecanismosOperacional = filtradoH.filter(
+          (x: { Mecanismo_x0020_del_x0020_Driver: any }) => x.Mecanismo_x0020_del_x0020_Driver.Label == "Otros mecanismos Operacionales"
         );
         this.setState(
           {
             mecanismos: res,
             MecanismosdelDriver: MecanismosdelDriver,
             OtrosMecanismosOperacional: OtrosMecanismosOperacional,
+          }, () => {
+            this.actualizarAcordeon(acordeon)
           }
         );
-      });
+
+
+
+
+
+
+      }).catch(() => { this.setState({ hasError: true }) });
   }
 
-  public SetEstadoTablaModelo()
-  {
-    this.setState({ estadoTablaModelo: false });
-  }
 
   // Funcion Abrir Modal
   closeModal = () => {
@@ -390,73 +435,34 @@ class Pilares extends React.Component<IPilaresProps, any> {
   }
 
   // Funcion Cerrar Modal
-  private openModal() {
-    this.setState({ estadoModal: true, EstadoMenu2: 0 });
-  }
-
-  // funcion validacion de roles
-  private getGroups(Id: any) {
-    if (this.props.NombreSubsitio) {
-      const prueba = this.props.NombreSubsitio;
-      const prueba2 = prueba[0].toUpperCase() + prueba.substring(1);
-      this.setState(
-        {
-          NombreConvertido: prueba2,
-        },
-        () => {
-          var nombreGrupo = "Gestores_" + prueba2;
-
-          this.pnp.getUserInGroup(nombreGrupo, Id).then((resUser: any) => {           
-          });
-
-          this.pnp.getGroupsByUserId(Id).then((resGroups: any) => {           
-            var gesto = resGroups.filter(
-              (x: { LoginName: any }) => x.LoginName == "Gestores_" + prueba2
-            );
-    
-            this.setState({
-              gestores: gesto,
-            });
-          });
-
-          var nombreGrupo = "Lector_todo_Corporativo";
-
-          this.pnp.getUserInGroup(nombreGrupo, Id).then((resUser: any) => {           
-          });
-
-          this.pnp.getGroupsByUserId(Id).then((resGroups: any) => {            
-            var Lecto = resGroups.filter(
-              (x: { LoginName: any }) =>
-                x.LoginName == "Lector_todo_Corporativo"
-            );          
-
-            this.setState({
-              Lector: Lecto,
-            });
-          });
-        }
-      );
+  private openModal(IdMecanismo?: any) {
+    if (IdMecanismo) {
+      this.setState({
+        IdMecanismo: parseInt(IdMecanismo, 10), estadoModal: true, EstadoMenu2: 0
+      })
     } else {
-      //console.log("No se encuentra Nombre");
+      this.setState({ estadoModal: true, EstadoMenu2: 0 });
+
     }
   }
+
 
   // funcion para iniciar variables globales para las funcionalidades
   public async loadContextSite() {
     try {
       const sp = spfi();
-      
+
       const oContext = await sp.web.getContextInfo();
 
       this.setState({
         urlSitio: oContext.SiteFullUrl?.split("/").slice(0, 2).join("/"),
       });
-      
+
     } catch (error) {
-      
+
     }
-  
-    
+
+
 
     this.pnp.getCurrentUser().then((user: any) => {
       this.setState(
@@ -465,7 +471,7 @@ class Pilares extends React.Component<IPilaresProps, any> {
           UserName: user.Title,
         },
         () => {
-          this.getGroups(user.Id);
+
         }
       );
     });
@@ -498,75 +504,140 @@ class Pilares extends React.Component<IPilaresProps, any> {
         ""
       )
       .then(
-        (res: any) => (     
+        (res: any) => (
           this.setState({
             infoDrivers: res,
           })
         )
+      ).catch(() => { this.setState({ hasError: true }) });
+  }
+
+
+  closeModalMecan = () => {
+    this.setState({ showModal: false });
+  }
+
+
+
+  openModalCrear = (Acceso: any, opcion: any, IdMecanismo: any) => {
+    const crearProps = {
+      Acceso: Acceso,
+      opcion: opcion,
+      IdMecanismo: IdMecanismo
+    }
+
+    this.setState({
+      CrearProps: crearProps,
+      showModalCrear: true
+    })
+  }
+
+  openModalWithProps = (props: any) => {
+    this.setState({
+      showModal: true,
+      pilaresProps: props
+    });
+  };
+
+  private async getMecanismo(direccion: string, area: string, seguridad: string, id: any) {
+    try {
+      const res = await this.pnp.getListItems(
+        "Mecanismos Local",
+        ["Nombre_x0020_Mecanismo_x0020_Loc"],
+        `ID eq '${id}'`,
+        "", "", 0, this.props.SitioSigla
       );
-  }
 
-  // funcion para consultar pilares
-  private consultarPilares(NumeroPilar: any) {
-    
-    this.pnp.getListItems(
-        "Pilares Local",
-        ["*", "ID_x0020_Modelo_x0020_Local/Nombre_x0020_Modelo_x0020_Local"],
-        "No_x0020_Pilar ne 0 and ID_x0020_Modelo_x0020_Local/Nombre_x0020_Modelo_x0020_Local eq '" +
-          this.props.match.params.Modelo +
-          "'",
-        "ID_x0020_Modelo_x0020_Local","",0,this.props.SitioSigla
-      ).then((items: any) => {
-        var pilar = items.filter(
-          (x: { No_x0020_Pilar: any }) => x.No_x0020_Pilar == NumeroPilar
-        );
+      if (res && res.length > 0) {
+        const { Nombre_x0020_Mecanismo_x0020_Loc } = res[0];
 
-        this.setState(
-          {
-            NumerosPilares: items,
-            estadoPilar: true,
-            InfoModelo: pilar,
-          },
-          () => {
-            if (pilar.length > 0) {
-              this.consultarDriver();
-            }
+        const documentos = await this.pnp.ObtenerArchivosByMecanismo(Nombre_x0020_Mecanismo_x0020_Loc, seguridad.split(";")[0], direccion, area);
+
+        if (documentos && documentos.length > 0) {
+          const ficha = await this.pnp.consultarFichaForTable(Nombre_x0020_Mecanismo_x0020_Loc);
+
+          if (ficha && ficha.length > 0) {
+            const pilaresProps = {
+              Direccion: direccion,
+              IdVisor: area,
+              Modelo: `Modelo ${area}`,
+              NumeroPilar: "1",
+              NombreMecanismo: Nombre_x0020_Mecanismo_x0020_Loc,
+              Seguridad: seguridad.split(";")[0],
+              Acceso: "1",
+              Ficha: ficha,
+              DocumentosMecanismo: documentos
+            };
+
+         
+
+            this.openModalWithProps(pilaresProps);
+
+
           }
-        );
-      });
+
+
+        }
+      }
+      else {
+        alert("La ficha no contiene información");
+      }
+
+    } catch (error) {
+      console.error('Error en getMecanismo:', error);
+    }
   }
 
-  public handleEstadoMenuChange(id: string, value: boolean)
-  {
-    this.setState({[id]: value});
+
+
+
+
+  public handleEstadoMenuChange(id: string, value: boolean) {
+    this.setState({ [id]: value });
   }
+
 
 
 
   public render(): React.ReactElement<IPilaresProps> {
+
+
     return (
+
+      <>
+      
+
+
+      {
+        this.state.pilarExiste ? 
+
+
+
+        
       <div>
-        {/* Modal */}        
-        {this.state.estadoModal == true ? (          
-          <ModelMecanismo 
-            Context={this.props.Webpartcontext}
-            UserId={this.props.UserId}
-            UrlSitio={this.state.urlSitio}
-            Titulo="Ficha mecanismo"
-            Acceso={this.props.match.params.Acceso}
-            DocumentosMecanismo={this.state.documentosMecanismo}
-            NombreMecanismo={this.state.NombreMecanismo}
-            Direccion = {this.props.match.params.direccion}
-            IdVisor = {this.props.match.params.IdVisor}
-            EstadoTablaModelo = {this.state.estadoTablaModelo}
-            SetEstadoTablaModelo = {this.state.estadoTablaModelo}
-            Ficha = {this.state.ficha}
-            closeModal = {this.closeModal}
-            tablaModelo = {this.TablaModelo}
-          />) : (<>
-          <div className="toolbar py-5 py-lg-7 padding-top" id="kt_toolbar">
+      {this.state.estadoModal == true ? (
+        <>
+
+          <FichaModal
+            context={this.props.Webpartcontext}
+            userId={this.props.UserId}
+            urlSite={this.props.NombreSubsitio}
+            IdMecanismo={this.state.IdMecanismo}
+            CloseModal={this.closeModal.bind(this)}
+            Area={this.state.AreaNombre}
+            Direccion={this.state.DireccionNombre}
+            SubArea={this.state.SubAreaNombre}
+            NombrePais={this.state.NombrePais}
+          />
+
+
+        </>
+
+
+      ) : (<>
+        <div className="toolbar py-5 py-lg-7 padding-top" id="kt_toolbar">
           <div id="kt_toolbar_container" className="container-xxl d-flex flex-stack flex-wrap">
-            <div className="page-title d-flex flex-column me-3">
+            <div className="page-title d-flexn flex-column me-3">
               <h1 id="contentn" className="d-flex text-dark fw-bolder my-1 fs-2">
                 {this.props.match.params.Modelo}
               </h1>
@@ -597,40 +668,46 @@ class Pilares extends React.Component<IPilaresProps, any> {
                 </li>
 
 
-               
+
               </ul>
             </div>
 
             <div className="d-flex align-items-center py-1-1">
               <div className="d-flex my-4 me-3">
-                <Link to={"/Visor/" + this.props.match.params.direccion + "/" + this.props.match.params.IdVisor}>
+
+                <Link to={`/Visor/${this.state.modeloActual}`}>
                   <a className="md-rg btn-regresa1">
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                      width="16" height="16" fill="currentColor"
-                      className="bi bi-chevron-left" viewBox="0 0 16 16">
-                      <path fill-rule="evenodd"
-                        d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"
-                      />
-                    </svg>
-                    Regresar
-                  </a>
+                      <svg xmlns="http://www.w3.org/2000/svg"
+                        width="16" height="16" fill="currentColor"
+                        className="bi bi-chevron-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd"
+                          d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"
+                        />
+                      </svg>
+                      Regresar
+                    </a>
+
+
                 </Link>
+
+
+                
               </div>
 
               {/*boton Mapa de Mecanismocs */}
               <div className="d-flex my-4 me-3">
                 <a href={this.state.linkMapaMecanismo} className="btn btn-outline btn-outline-primary btn-active-primary">
-                  Mapa de Mecanismos
+                  {this.state.BtnMapaMecanismo}
                 </a>
               </div>
 
               <h1>{this.props.UserId}</h1>
-            
+
             </div>
           </div>
-          </div>
-       
-          <div id="kt_content_container" className="d-flex flex-column-fluid align-items-start padding-cero">
+        </div>
+
+        <div id="kt_content_container" className="d-flex flex-column-fluid align-items-start padding-cero">
           <div className="content flex-row-fluid" id="kt_content">
             <div className="d-flex flex-column flex-root">
               <div className="page d-flex flex-row flex-column-fluid">
@@ -640,12 +717,12 @@ class Pilares extends React.Component<IPilaresProps, any> {
                       <div className="d-flex flex-column flex-lg-row">
                         <div className="flex-lg-row-fluid">
                           <div className="">
-                            <h1>Modelo de {this.state.NombreModelo}</h1>  
+                            <h1>Modelo de {this.state.NombreModelo}</h1>
                             <div className="card-body-pilar">
                               <div className="row">
                                 <div className="col-md-1-1">
                                   <h3 id="TituloPilar" className="text-gray-600 fs-6 text-uppercase mb-5">
-                                    Pilares
+                                   {this.state.tituloPilares}
                                   </h3>
                                 </div>
                                 <div className="col">
@@ -653,7 +730,7 @@ class Pilares extends React.Component<IPilaresProps, any> {
                                     {this.state.NumerosPilares.map((e: any) => (
                                       <li className="nav-item">
                                         {this.state.NumeroPilar == e.No_x0020_Pilar ? (
-                                          <a className="nav-link nav-pilares "  id="PilarSeleccionado" data-bs-toggle="tab"
+                                          <a className="nav-link nav-pilares " id="PilarSeleccionado" data-bs-toggle="tab"
                                             onClick={() => {
                                               this.actualizarAcordeon(0);
                                               this.changePilar(e.ID);
@@ -663,7 +740,7 @@ class Pilares extends React.Component<IPilaresProps, any> {
                                         ) : (
                                           <a className="nav-link nav-pilares " data-bs-toggle="tab"
                                             onClick={() => {
-                                              this.actualizarAcordeon(0);
+                                              this.actualizarAcordeon(e.Id);
                                               this.changePilar(e.ID);
                                             }}>
                                             {e.No_x0020_Pilar}
@@ -678,41 +755,41 @@ class Pilares extends React.Component<IPilaresProps, any> {
 
                               <div className="tab-content" id="myTabContent">
                                 {/* Pilar 1 */}
-                              <div className="tab-pane fade show active" id="kt_tab_pane_1" role="tabpanel">
+                                <div className="tab-pane fade show active" id="kt_tab_pane_1" role="tabpanel">
                                   <div className="mt-5 mb-5 pb-0">
                                     <div className="d-flex align-items-center mb-10">
                                       <span className="svg-icon svg-icon-primary">
 
 
-                                        <img src={this.state.urlImgPilar} width="172" height="172"/>
+                                        <img title="." src={this.state.urlImgPilar} width="172" height="172" />
 
                                       </span>
-                                        <h2 className="text-uppercase px-5 mb-5">
-                                          {this.state.Pilar}
-                                        </h2>
-                                 
+                                      <h2 className="text-uppercase px-5 mb-5">
+                                        {this.state.Pilar}
+                                      </h2>
+
                                     </div>
-                                    <h3 className="text-gray-600 fs-6 text-uppercase mb-5">Drivers Operacionales</h3>
-                                    
+                                    <h3 className="text-gray-600 fs-6 text-uppercase mb-5">{this.state.TituloDriverO}</h3>
+
                                     {this.state.infoDrivers.map(
                                       (e: any, i: any) => (
                                         <div className="accordion accordion-flush">
                                           <div className="accordion-header" id="kt_accordion_1_header_1">
-                                            {e.Id ===this.state.estadoAcordeon ? (
+                                            {e.Id === this.state.estadoAcordeon ? (
                                               <button className="accordion-button fs-4 fw-bold"
                                                 type="button" onClick={() => {
                                                   this.actualizarAcordeon(0),
-                                                  this.ConsultarMecanismos(e.ID);
+                                                    this.ConsultarMecanismos(e.ID,0);
                                                 }}>
                                                 {this.state.NumeroPilar + "." + (i + 1) + ". " + e.Nombre_x0020_Driver}
                                                 :
                                               </button>
-                                              ) : (
+                                            ) : (
                                               <button className="accordion-button collapsed"
                                                 id="textoColapso" type="button"
                                                 onClick={() => {
-                                                  this.actualizarAcordeon(e.Id),
-                                                    this.ConsultarMecanismos(e.ID);
+                                                  //this.actualizarAcordeon(e.Id),
+                                                    this.ConsultarMecanismos(e.ID,e.Id);
                                                 }}>
 
                                                 {this.state.NumeroPilar + "." + (i + 1) + ". " + e.Nombre_x0020_Driver}
@@ -726,70 +803,137 @@ class Pilares extends React.Component<IPilaresProps, any> {
                                               <div className="pb-0">
                                                 <div className="d-flex align-items-center mb-5-1 padding-top" id="padding-pilares1">
                                                   <div className="text-gray-600">
-                                                    {e.ObjetivoDriver}
+                                                    {e.Objetivo_x0020_Driver}
                                                   </div>
+                                                 
                                                 </div>
+                                               
+                                                  <br/>
                                                 <div className="lineDescription"></div>
                                                 <div className="row">
                                                   <div className="col-12">
                                                     <div className="row">
-                                                      <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12">
+                                                      <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12" id="cuerpoMecanismo">
                                                         <h4 className="card-title align-items-start flex-column">
                                                           <span className="text-primary mb-5 fs-5" id="padding-pilares">
-                                                            Mecanismos del driver
+                                                            {this.state.TituloMecanismo}
                                                           </span>
                                                         </h4>
-                                                        <div className="row d-flex">
-                                                          {this.state.MecanismosdelDriver.map(
-                                                            (f: any, contador: any) => {
-                                                               this.mecanismo.Nombre_x0020_Mecanismo_x0020_Loc = f.Nombre_x0020_Mecanismo_x0020_Loc; 
-                                                               this.mecanismo.ID = f.ID; 
-                                                               let strValue = f.Porcentaje_x0020_Implementacion.replace(/\D/g,'');                                                               
-                                                               this.mecanismo.Implementado = parseInt(strValue, 10); // fix por test
-                                                               this.mecanismo.Seguridad = f.Seguridad
-                                                               
-                                                              
-                                                               let numeroFilas = this.state.MecanismosdelDriver.length > 1 && this.state.MecanismosdelDriver.length / 2;
-                                                               let maxNumeroFilas = Math.round(Number(numeroFilas));
-                                                              
 
-                                                              if (maxNumeroFilas > 1 && contador + 1 <=maxNumeroFilas)
-                                                               {
-                                                                return(                                                                                                                  
-                                                                  <MecanismoItem 
-                                                                    mecanismo={this.mecanismo}
-                                                                    gestoresLength={this.state.gestores.length}
-                                                                    lectorLength={this.state.Lector.length}
-                                                                    obtenerArchivos={this.ObtenerArchivos}
-                                                                    consultarFicha={this.consultarFicha}                                                                   
-                                                                  /> )
 
-                                                              } else if (maxNumeroFilas > 1 && contador + 1 > maxNumeroFilas &&
-                                                                contador + 1 <= this.state.MecanismosdelDriver.length
-                                                              ) {
-                                                                return(
-                                                                <MecanismoItem 
-                                                                  mecanismo={this.mecanismo}
-                                                                  gestoresLength={this.state.gestores.length}
-                                                                  lectorLength={this.state.Lector.length}
-                                                                  obtenerArchivos={this.ObtenerArchivos}
-                                                                  consultarFicha={this.consultarFicha}
-                                                                  handleEstadoMenuChange={this.handleEstadoMenuChange}                                                                  
-                                                                />)                                                                                                                         
-                                                            }else{
-                                                              return(
-                                                                <MecanismoItem 
-                                                                mecanismo={this.mecanismo}
-                                                                gestoresLength={this.state.gestores.length}
-                                                                lectorLength={this.state.Lector.length}
-                                                                obtenerArchivos={this.ObtenerArchivos}
-                                                                consultarFicha={this.consultarFicha}                                                                   
-                                                              /> 
-                                                              )
-                                                            }
+                                                        {
+                                                          this.state.MecanismosdelDriver.map((f: any) => (
+
+                                                            <div className="row">
+                                                              <div className="col-7">
+                                                                {
+                                                                   
+
+                                                                   
+                                                                    f.No_x0020_Mecanismo_x0020_Local >0  && f.URL_x0020_DocumentSet !== "" || f.Mecanismos_x0020_Asociados !=="" ?
+                                                                    <a className={f.URL_x0020_DocumentSet !== "" || f.Mecanismos_x0020_Asociados !=="" ? "fw-bold d-block fs-6 text-hover-primary mt-2" : "text-gray-800"} onClick={() => this.openModal(f.ID)}> {f.No_x0020_Mecanismo_x0020_Local}. {f.Nombre_x0020_Mecanismo_x0020_Loc}</a>
+                                                                    
+                                                                    
+                                                                    :
+
+                                                                   
+                                                                      <a className={"text-gray-800"} > <a id="sinNumero">0.</a> {f.Nombre_x0020_Mecanismo_x0020_Loc}</a>
+                                                                      
+                                                                    
+                                                                   
                                                             
-                                                          })}
-                                                        </div>
+                                                                
+
+                                                                }
+                                                              </div>
+                                                              <div className="col">
+                                                                {(this.state.gestores > 0) ? (
+                                                                  
+                                                                    f.Nivel_x0020_Implementacion === "Implementado"?
+                                                                                                                                        
+                                                                  <div className="my-0 overMenuActualizar">
+                                                                  <button title="b" type="button" className="btn btn-sm btn-icon btn-color-primary btn-active-light-primary" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                                                                    <span id="trespuntos" className="svg-icon svg-icon-2 svg-icon-primary ">
+                                                                      <SVGIconComponent iconType="M6" />
+                                                                    </span>
+                                                                  </button>
+
+                                                                  <div className="menuActualizar" id="menuGestores">
+                                                                    <div className="menu-item">
+                                                                      <Link to={`/FormularioActualizacion/${f.Id}`}>
+                                                                        <a className="menu-link px-3-1" id="colorMenuPilares">
+                                                                          ACTUALIZAR
+                                                                        </a>
+                                                                      </Link>
+                                                                    </div>
+                                                                    <div className="menu-item">
+                                                                      <Link to={`/FormularioEliminacion/${f.Id}`}>
+                                                                        <a className="menu-link px-3-1" id="colorMenuPilares">
+                                                                          ELIMINAR
+                                                                        </a>
+                                                                      </Link>
+                                                                    </div>
+                                                                    <div className="menu-item">
+                                                                      <Link to={`/ComentarDocumentos/${f.Id}`}>
+                                                                        <a className="menu-link px-3-1" id="colorMenuPilares">
+                                                                          COMENTAR
+                                                                        </a>
+                                                                      </Link>
+                                                                    </div>
+                                                                  </div>
+                                                                </div>:<div className="my-0 overMenuActualizar">
+                                                                    <button title="b" type="button" className="btn btn-sm btn-icon btn-color-primary btn-active-light-primary" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                                                                      <span id="trespuntos" className="svg-icon svg-icon-2 svg-icon-primary ">
+                                                                        <SVGIconComponent iconType="M6" />
+                                                                      </span>
+                                                                    </button>
+
+                                                                    <div className="menuActualizar" id="menuGestores">
+                                                                      <div className="menu-item">
+                                                                        <Link to={`/FormularioCreacion/${f.Id}`}>
+                                                                          <a className="menu-link px-3-1" id="colorMenuPilares">
+                                                                            CREAR
+                                                                          </a>
+                                                                        </Link>
+                                                                      </div>                                                                       
+                                                                    </div>
+                                                                  </div>
+
+
+                                                                ) : (f.Nivel_x0020_Implementacion === "Implementado"?
+                                                                <div className="col-lg-2 col-md-2 col-xl-2 col-xxl-2 mt-3">
+                                                                  <div className="my-0 overMenuActualizar">
+                                                                    <button title="b" type="button"
+                                                                      //onClick={() => { this.setState({ ['EstadoMenu' + f.ID]: !this.state['EstadoMenu' + f.ID], },) }}
+                                                                      className="btn btn-sm btn-icon btn-color-primary btn-active-light-primary"
+                                                                      data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                                                                      <span className="svg-icon svg-icon-2 svg-icon-primary ">
+                                                                        <SVGIconComponent iconType="M6" />
+                                                                      </span>
+                                                                    </button>
+                                                                    <div className="menuActualizar" id="menuComentar">
+                                                                      <div className="menu-item px-3-1">
+                                                                        <Link to={"/ComentarDocumentos/" + f.Id}>
+                                                                          <a id="colorMenuPilares" className="menu-link px-3-1">
+                                                                            COMENTAR
+                                                                          </a>
+                                                                        </Link>
+                                                                      </div>
+                                                                    </div>
+                                                                  </div>
+                                                                </div>:null
+                                                                )
+                                                                }
+
+
+
+
+                                                              </div>
+
+                                                            </div>
+                                                          ))
+                                                        }
+
                                                       </div>
                                                     </div>
                                                   </div>
@@ -799,12 +943,11 @@ class Pilares extends React.Component<IPilaresProps, any> {
                                                       <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12">
                                                         <h4 className="card-title align-items-start flex-column">
                                                           <span className="text-primary mb-5 fs-5" id="padding-pilares">
-                                                            Otros mecanismos operacionales
+                                                            {this.state.TituloOtrosm}
                                                           </span>
                                                           <span className="a-buttomder">
-                                                            {this.state.gestores .length > 0 &&
-                                                            this.state.Lector.length <= 0 ? (
-                                                              <Link to={"/CrearContenido/1/1"}>
+                                                            {this.state.gestores > 0 && this.state.Lector.length <= 0 ? (
+                                                              <Link to={"/FormularioActualizacion"}>
                                                                 <button className="btn-crear1" type="button" name="Crear">
                                                                   Crear
                                                                 </button>
@@ -812,66 +955,140 @@ class Pilares extends React.Component<IPilaresProps, any> {
                                                             ) : null}
                                                           </span>
                                                         </h4>
-                                                        <div className="row d-flex">
-                                                          {
-                                                          this.state.OtrosMecanismosOperacional.map(                                                            
-                                                            (f: any,contador: any) => {
-                                                              this.mecanismo.Nombre_x0020_Mecanismo_x0020_Loc = f.Nombre_x0020_Mecanismo_x0020_Loc; 
-                                                              this.mecanismo.ID = f.ID; 
-                                                              this.mecanismo.Implementado = f.Implementado;
-                                                              this.mecanismo.Seguridad = f.Seguridad;
 
-                                                              let numeroFilas = this.state.OtrosMecanismosOperacional.length > 1 &&
-                                                              this.state.OtrosMecanismosOperacional.length / 2;
-                                                              
-                                                              let maxNumeroFilas = Math.round(Number(numeroFilas));
+                                                        {
+                                                          this.state.OtrosMecanismosOperacional.map((f:any)=>(
+                                                            <div className="row">
+                                                              <div className="col-7">
 
-                                                              (maxNumeroFilas > 1 && contador + 1 <= maxNumeroFilas) ?
-                                                                <MecanismoItem 
-                                                                  mecanismo={this.mecanismo}
-                                                                  gestoresLength={this.state.gestores.length}
-                                                                  lectorLength={this.state.Lector.length}
-                                                                  obtenerArchivos={this.ObtenerArchivos}
-                                                                  consultarFicha={this.consultarFicha}
-                                                                  handleEstadoMenuChange={this.handleEstadoMenuChange}/>                                                                          
-                                                                :                                                                                                                                  
-                                                                <MecanismoItem 
-                                                                  mecanismo={this.mecanismo}
-                                                                  gestoresLength={this.state.gestores.length}
-                                                                  lectorLength={this.state.Lector.length}
-                                                                  obtenerArchivos={this.ObtenerArchivos}
-                                                                  consultarFicha={this.consultarFicha}/> 
+                                                                {
+                                                                 
+                                                                   
+                                                                    f.No_x0020_Mecanismo_x0020_Local >0  && f.URL_x0020_DocumentSet !== "" || f.Mecanismos_x0020_Asociados !=="" ?
 
-                                                               (maxNumeroFilas > 1 && contador + 1 > maxNumeroFilas &&
-                                                                contador + 1 <= this.state.OtrosMecanismosOperacional.length) ?
-                                                                <MecanismoItem 
-                                                                  mecanismo={this.mecanismo}
-                                                                  gestoresLength={this.state.gestores.length}
-                                                                  lectorLength={this.state.Lector.length}
-                                                                  obtenerArchivos={this.ObtenerArchivos}
-                                                                  consultarFicha={this.consultarFicha}
-                                                                  handleEstadoMenuChange={this.handleEstadoMenuChange}/> 
-                                                                  :                                                                  
-                                                                <MecanismoItem 
-                                                                  mecanismo={this.mecanismo}
-                                                                  gestoresLength={this.state.gestores.length}
-                                                                  lectorLength={this.state.Lector.length}
-                                                                  obtenerArchivos={this.ObtenerArchivos}
-                                                                  consultarFicha={this.consultarFicha}/> 
-                                                                
+                                                                    <a className={ f.URL_x0020_DocumentSet !== "" || f.Mecanismos_x0020_Asociados !==""  ? "fw-bold d-block fs-6 text-hover-primary mt-2" : "text-gray-800"} onClick={() => this.openModal(f.ID)}> &#8226;  {f.Nombre_x0020_Mecanismo_x0020_Loc}</a>
+                                                                    
+                                                                    :
+
+                                                                      <a className={"text-gray-800"} > &#8226; {f.Nombre_x0020_Mecanismo_x0020_Loc}</a>
+                                                                      
+                                                                    
+                                                                   
+                                                                 
+                                                                }
+
+                                                                 
+                                                              </div>
+
+                                                              <div className="col">
+                                                              {(this.state.gestores > 0) ? (
+                                                                  
+                                                                  f.Nivel_x0020_Implementacion === "Implementado"?
+                                                                                                                                      
+                                                                <div className="my-0 overMenuActualizar">
+                                                                <button title="b" type="button" className="btn btn-sm btn-icon btn-color-primary btn-active-light-primary" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                                                                  <span id="trespuntos" className="svg-icon svg-icon-2 svg-icon-primary ">
+                                                                    <SVGIconComponent iconType="M6" />
+                                                                  </span>
+                                                                </button>
+
+                                                                <div className="menuActualizar" id="menuGestores">
+                                                                  <div className="menu-item">
+                                                                    <Link to={`/FormularioActualizacion/${f.Id}`}>
+                                                                      <a className="menu-link px-3-1" id="colorMenuPilares">
+                                                                        ACTUALIZAR
+                                                                      </a>
+                                                                    </Link>
+                                                                  </div>
+                                                                  <div className="menu-item">
+                                                                    <Link to={`/FormularioEliminacion/${f.Id}`}>
+                                                                      <a className="menu-link px-3-1" id="colorMenuPilares">
+                                                                        ELIMINAR
+                                                                      </a>
+                                                                    </Link>
+                                                                  </div>
+                                                                  <div className="menu-item">
+                                                                    <Link to={`/ComentarDocumentos/${f.Id}`}>
+                                                                      <a className="menu-link px-3-1" id="colorMenuPilares">
+                                                                        COMENTAR
+                                                                      </a>
+                                                                    </Link>
+                                                                  </div>
+                                                                </div>
+                                                              </div>:<div className="my-0 overMenuActualizar">
+                                                                  <button title="b" type="button" className="btn btn-sm btn-icon btn-color-primary btn-active-light-primary" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                                                                    <span id="trespuntos" className="svg-icon svg-icon-2 svg-icon-primary ">
+                                                                      <SVGIconComponent iconType="M6" />
+                                                                    </span>
+                                                                  </button>
+
+                                                                  <div className="menuActualizar" id="menuGestores">
+                                                                    <div className="menu-item">
+                                                                      <Link to={`/FormularioCreacion/${f.Id}`}>
+                                                                        <a className="menu-link px-3-1" id="colorMenuPilares">
+                                                                          CREAR
+                                                                        </a>
+                                                                      </Link>
+                                                                    </div>                                                                       
+                                                                  </div>
+                                                                </div>
+
+
+                                                              ) : (f.Nivel_x0020_Implementacion === "Implementado"?
+                                                              <div className="col-lg-2 col-md-2 col-xl-2 col-xxl-2 mt-3">
+                                                                <div className="my-0 overMenuActualizar">
+                                                                  <button title="b" type="button"
+                                                                    //onClick={() => { this.setState({ ['EstadoMenu' + f.ID]: !this.state['EstadoMenu' + f.ID], },) }}
+                                                                    className="btn btn-sm btn-icon btn-color-primary btn-active-light-primary"
+                                                                    data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                                                                    <span className="svg-icon svg-icon-2 svg-icon-primary ">
+                                                                      <SVGIconComponent iconType="M6" />
+                                                                    </span>
+                                                                  </button>
+                                                                  <div className="menuActualizar" id="menuComentar">
+                                                                    <div className="menu-item px-3-1">
+                                                                      <Link to={"/ComentarDocumentos/" + f.Id}>
+                                                                        <a id="colorMenuPilares" className="menu-link px-3-1">
+                                                                          COMENTAR
+                                                                        </a>
+                                                                      </Link>
+                                                                    </div>
+                                                                  </div>
+                                                                </div>
+                                                              </div>:null
+                                                              )
                                                               }
-                                                           )}
-                                                        </div>
+                                                                
+
+
+                                                              </div>
+
+
+                                                            </div>
+                                                            
+
+
+
+
+
+
+
+                                                          ))
+                                                        }
+
+
+                                                        
+                                                        
+                                                      </div>
+                                                    </div>
                                                   </div>
                                                 </div>
-                                                  </div>
+                                              </div>
                                             </div>
-                                          </div>
-                                        </div>
-                                        ): null}  
-                                  </div> )) }
-                </div>
-                              </div>
+                                          ) : null}
+                                        </div>))}
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -883,20 +1100,44 @@ class Pilares extends React.Component<IPilaresProps, any> {
               </div>
             </div>
           </div>
-          </div></>)
-        }
+        </div>
+      </>)
+      }
     </div>
+        
+        
+        
+        
+        
+        
+        
+        
+        :
+
+        
+        
+        
+        
+        <div>
+
+        <h1>El pilar que estas buscando no se encuentra disponible</h1>
+        
+        </div>
+      }
+      </>
+
+
     )
   }
-
-
 }
 
-const mapStateToProps = (state:any) => {
+const mapStateToProps = (state: any) => {
   return {
     parametros: state.parametros.parametros,
-    sitio:state.sitio
+    sitio: state.sitio,
+    userDetail: state.userDetail.userDetail,
+    paises: state.paises.paises,
   };
 };
 
-export default connect(mapStateToProps) (withRouter(Pilares));
+export default connect(mapStateToProps)(withRouter(Pilares));

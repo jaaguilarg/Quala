@@ -1,6 +1,7 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
 import { PNP } from '../Util/util';
-import {withRouter } from 'react-router-dom'
+import {withRouter} from 'react-router-dom'
 import {
   PeoplePicker,
   PrincipalType,
@@ -14,12 +15,14 @@ import '@pnp/sp/lists';
 import '@pnp/sp/content-types';
 import '@pnp/sp/folders';
 import '@pnp/sp/items';
+import SVGIconComponent from '../Util/SVGIcon';
+import { utilFormulario } from '../Util/utilFormulario';
 
 
 
 export interface ICrearContenidoProps {
   Titulo: any
-  context: any
+  webPartContext: any
   Subsitio: any
   NombreSubsitio: any
   match: any
@@ -31,27 +34,59 @@ export interface ICrearContenidoProps {
   history: any
   nombreMecanismo:any
   Seguridad:any
-
+  Acceso: any
+  opcion: any
+  IdMecanismo: any
+  location: any;
+  userDetail: any;  
+  parametros: any;
+  niveles: any;
+  paises: any;
+  
 }
 
 
 
 class CrearContenido extends React.Component<ICrearContenidoProps, any> {
   public pnp: PNP
+  public utilFormulario: utilFormulario
   public AproArea = false
   public AproRoles = false
   public Apro = false
+  actualizaEstado:{}
+       
+
+
+    public mappingRol = {
+      RevisorId: "Revisor",
+      PublicadorId: "Publicador",
+      Aprobador_x0020_RevisaId: "Aprobador Revisa",
+      Gerente_x0020_de_x0020_AreaId: "Gerente de Área",
+      AuditorId: "Auditor",
+      Jefe_x0020_o_x0020_Gerente_x0020Id: "Jefe o Gerente",
+      DirectorGHId: "Director GH",
+      Director_x0020_areaId: "Director de Área",
+      Director_x0020_GeneralId: "Director General",
+      Presidente_x0020_EjecutivoId: "Presidente Ejecutivo",
+      Lider_x0020_de_x0020_modelo_x002Id: "Líder de Modelo",        
+  };
+
 
   constructor(props:any) {
     super(props)
 
-    this.pnp = new PNP(this.props.context)
+    this.pnp = new PNP(this.props.webPartContext)
+    this.utilFormulario = new utilFormulario(this.props.webPartContext);
 
     var pasos = [
       { Title: 'Datos del Mecanismo' },
       { Title: 'Aprobadores' },
       { Title: 'Control de Cambios' },
     ]
+
+
+
+    
     
     this.state = {
       tipo: '',
@@ -59,7 +94,6 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
       Aprobadores: [],
       urlSite: '',
       sitio: '',
-      paises: [],
       urlSitePrincipal: '',
       sitioPrincipal: '',
       direcciones: this.props.Direcciones,
@@ -171,13 +205,77 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
       NombreMecanismo1:"",
       deshabilitarBotonAuditoria:false,
       driver1: "",
-      Areaconsulta: ""
+      Areaconsulta: "",
+      opcion: 1,
+      listaUsuarios: [],
+      aprobadores: [],
+      revisores: [],
+      elabarador:[],
+      nivelesAprobadores:[],
+      pais: this.props.paises.paises.filter((x:any) => x.Sigla == this.props.NombreSubsitio),
+      nivelesAprobacion:[],
+
 
     }
   }
 
   public componentWillMount(): void {
+
+
+    if(this.props.match.params.Acceso == 2){
+
+      this.pnp.getListItems("Mecanismos Local",[""],"ID eq " + this.props.match.params.IdMecanismo,"").then((items)=>{
+
+
+        this.setState({
+          direccion:items[0].Nombre_x0020_Modelo,
+          pilar:items[0].No_x0020_Pilar+"."+items[0].Nombre_x0020_Pilar,
+          disabled:true
+
+
+        })
+      })
+
+    }
+
+
     
+
+    this.consultarTipoMecanismo()
+    this.pnp.getTerms1("c7265500-76f2-40c8-9835-c0a332b66135","e2b6d139-540c-47f4-85d4-0fbb78566292").then((items)=>{
+     if(items.length>0){
+      this.setState({
+        plantas:items
+
+      })
+     }
+    })
+
+    this.consultarNiveles1()
+    if(this.props.opcion != undefined)
+    {
+      this.setState({opcion: this.props.opcion});
+    }
+    else
+    {
+      
+      const location = this.props.location;
+      switch (location.pathname) {
+      case '/FormularioCreacion':
+        this.setState({opcion: 1})              
+        break;
+      case '/FormularioActualizacion':
+        this.setState({opcion: 3})                       
+        break;
+      case '/FormularioEliminacion':
+        this.setState({opcion: 2})                     
+        break;      
+      default:      
+        console.log('Esta ruta no coincide con los casos definidos');
+      }
+    }
+        
+
     let nombreMecanismo = this.props.match.params.NombreMecanismo || this.props.nombreMecanismo;
     let Seguridad = this.props.match.params.Seguridad || this.props.Seguridad
     
@@ -214,10 +312,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
     if (this.state.IdMecanismo && this.state.IdMecanismo > 0) {
       this.setState(
         {
-          VisorOk:
-            this.props.match.params.Acceso +
-            '/' +
-            this.props.match.params.opcion,
+          VisorOk: this.state.opcion,
         },
         () => {
           this.consultardatos(this.state.IdMecanismo)
@@ -227,10 +322,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
     ) {
       this.setState(
         {
-          VisorOk:
-            this.props.match.params.Acceso +
-            '/' +
-            this.props.match.params.opcion,
+          VisorOk: this.state.opcion,
         },
         () => {
           this.consultarMecanismoDriver(this.props.match.params.IdDriver)
@@ -239,10 +331,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
     } else {
       this.setState(
         {
-          VisorOk:
-            this.props.match.params.Acceso +
-            '/' +
-            this.props.match.params.opcion,
+          VisorOk: this.state.opcion,
         },
         () => {
           this.CargaInicial()
@@ -257,9 +346,9 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
 
     if (!this.state.seccionesOk) {
       this.state.secciones.forEach((item:any, index:any) => {
-        if (index == 1 && this.props.match.params.opcion == 2) {
+        if (index == 1 && this.state.opcion == 2) {
           secciones.push({ Title: 'Documentos del Mecanismo' })
-        } else if (index == 1 && this.props.match.params.opcion == 3) {
+        } else if (index == 1 && this.state.opcion == 3) {
           secciones.push({ Title: 'Plan de acción de los contenidos' })
         }
         secciones.push(item)
@@ -271,17 +360,12 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
       })
     }
 
-    this.consultarMatrizAprobacion()
-
-    this.convertirPrimeraLetra()
 
     this.consultarRoles()
 
     this.plantas()
     this.consultarMotivos()
 
-    this.paises()
-    this.consultarDirecciones()
   }
 
 
@@ -295,8 +379,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
 
     cAprobadoresArea[Index]['AprobadoresNombreDireccion'] = Direccion
 
-    this.setState({
-      ['AreasDireccion' + Index]: Areas,
+    this.setState({['AreasDireccion' + Index]: Areas,
       cAprobadoresArea,
     })
   }
@@ -335,8 +418,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
             }
           })          
         })
-
-        console.log(AprobadoresArea);
+        
 
         this.setState({
           AprobadoresArea: AprobadoresArea,
@@ -417,19 +499,6 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
     )*/
   }
 
-  private convertirPrimeraLetra() {
-    if (this.props.NombreSubsitio) {   
-      this.setState(
-        {
-          NombreConvertido: this.props.NombreSubsitio,
-        },
-        () => {
-          //this.pnp.getGroups
-        },
-      )
-    } else {
-    }
-  }
 
   //funcion para consultar mecanismo
   private consultaMecanismoLocal(NombreDriver:any) {
@@ -443,92 +512,55 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
 
     })
 
-    if (this.props.match.params.opcion == 1) {
+    if (this.state.opcion == 1) {
 
       this.pnp.getListItems(
-
-        "MecanismoFilial",
-        ["*", "NombreDriver/Id", "NombreDriver/NombreDriver"],
-        `NombreDriver/NombreDriver eq '${NombreDriver}' and Implementado eq 0`,
-        "NombreDriver"
-      ).then((items) => {
-        console.log(items);
-
+        "Mecanismos Local",
+        ["*", "ID_x0020_Driver_x0020_Local/Id", "ID_x0020_Driver_x0020_Local/Nombre_x0020_Driver"],
+        `ID_x0020_Driver_x0020_Local/Nombre_x0020_Driver eq '${NombreDriver}' and Porcentaje_x0020_Implementacion lt 1`,
+        "ID_x0020_Driver_x0020_Local"
+      ).then((items) => {       
         if (items.length > 0) {
           this.setState({
             mecanismosBase: items,
             OtroMecanismoOperacionalDriver: false
           })
-
           items.forEach((item:any) => {
             if (item.SeccionMecanismo == "Otro Mecanismo Operacional") {
               this.setState({ OtroMecanismoOperacionalDriver: false })
             }
-
           })
-
           items.forEach((item:any) => {
-
             if (item.SeccionMecanismo == "Mecanismo del Driver") {
-
               this.setState({ MecanismosDelDriverLocal: false })
-
             }
-
           })
-
-
-
         } else {
           this.setState({
             NombreMecanismo: 0,
             mecanismosBase: [],
             OtroMecanismoOperacionalDriver: false,
             MecanismosDelDriverLocal: true
-
           })
-
         }
-
-
-
       })
 
     }
     else {
       this.pnp.getListItems(
-
-        "MecanismoFilial",
-
-        ["*", "NombreDriver/Id", "NombreDriver/NombreDriver"],
-
-        `NombreDriver/NombreDriver eq '${NombreDriver}' and Implementado eq 1`,
-
-        "NombreDriver"
-
-      ).then((items) => {
-
-        console.log(items);
-
-
+        "Mecanismos Local",
+        ["*", "ID_x0020_Driver_x0020_Local/Id", "ID_x0020_Driver_x0020_Local/Nombre_x0020_Driver"],    
+        `ID_x0020_Driver_x0020_Local/Nombre_x0020_Driver eq '${NombreDriver}' and Porcentaje_x0020_Implementacion eq 1.0`,
+        "ID_x0020_Driver_x0020_Local"
+      ).then((items) => {        
         if (items.length > 0) {
-
           this.setState({
-
             mecanismosBase: items
-
           })
-
-
-
           items.forEach((item:any) => {
-
             if (item.SeccionMecanismo == "Otro Mecanismo Operacional") {
-
               this.setState({ OtroMecanismoOperacionalDriver: false })
-
             }
-
           })
 
           items.forEach((item:any) => {
@@ -546,21 +578,13 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
         } else {
 
           this.setState({
-
             NombreMecanismo: 0,
-
             mecanismosBase: [],
-
             OtroMecanismoOperacionalDriver: true,
-
             MecanismosDelDriverLocal: true
-
           })
 
         }
-
-
-
       })
     }
 
@@ -571,7 +595,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
   //Funcion que guarda los documentos de en la biblioteca segun el modelo.
   private GuardarDocumentos() {
     /*if (
-      this.props.match.params.opcion == 1 &&
+      this.state.opcion == 1 &&
       this.props.match.params.IdMecanismo !== undefined
     ) {
       this.setState({
@@ -597,7 +621,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
               enfile,
               this.state.mecanismo,
               'Biblioteca Colabora/Carpeta Revision',
-            ).then((res) => console.log)
+            ).then((res) =>)
           })
 
           this.pnp.createdDocumentSet(
@@ -630,8 +654,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
       }
 
       this.pnp.insertItemRoot('Aprobadores', obj).then((items) => {
-        if (this.state.cAprobadores.length - 1 == i) {
-          //console.log("Registrado con ese usuario " + item.AprobadoresConRol)
+        if (this.state.cAprobadores.length - 1 == i) {          
           this.AproRoles = true
           if (this.AproRoles && this.AproArea && this.Apro) {
             this.finishSave()
@@ -652,8 +675,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
       }
 
       this.pnp.insertItemRoot('Aprobadores', obj1).then((items) => {
-        if (this.state.cAprobadoresArea.length - 1 == j) {
-          //console.log("Registro con usuario de area " + item.AprobadoresArea)
+        if (this.state.cAprobadoresArea.length - 1 == j) {          
           this.AproArea = true
           if (this.AproRoles && this.AproArea && this.Apro) {
             this.finishSave()
@@ -692,22 +714,22 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
   } 
 
   public finishSave() {
-    /*this.setState({
+    this.setState({
       Pasos: 'success',
       enviado: true,
       loading: false,
-    })*/
+    })
   }
 
   private _getPeoplePicker(items: any[], objeto:any) {
-    /*this.setState({
+    this.setState({
       [objeto]: items[0].id,
       [objeto + 'EMail']: items[0].secondaryText,
-    })*/
+    })
   }
   // funcion para agregar linea a demas aprobadores
   private addDemasAprobadores(arg0: string): void {
-    /*var c = []
+    var c = []
     const cDemasAprobadores = [...this.state.cDemasAprobadores]
 
     c = cDemasAprobadores
@@ -717,19 +739,19 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
     }
 
     c.push(pos)
-    this.setState({ cDemasAprobadores: c })*/
+    this.setState({ cDemasAprobadores: c })
   }
 
   //Funcion para añadir mas lineas para agregar aprobadores.
   private addAprobadoresArea(arg0: string): void {
-   /* var c = []
+    var c = []
     const cAprobadoresArea = [...this.state.cAprobadoresArea]
     c = cAprobadoresArea
     var pos = {
       p: 0,
     }
     c.push(pos)
-    this.setState({ cAprobadoresArea: c })*/
+    this.setState({ cAprobadoresArea: c })
   }
 
   private selectPlanAccion(target:any, index:any) {
@@ -759,7 +781,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
       ValorDocumentos: ValorDocumentos,
     })*/
   }
-// FUncion para actualizar el plan de accion de los documentos
+ // FUncion para actualizar el plan de accion de los documentos
   private ActualizarPlanAccion() {
     /*this.setState(
       {
@@ -767,7 +789,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
       },
       () => {
         if (
-          this.props.match.params.opcion !== 1 &&
+          this.state.opcion !== 1 &&
           this.props.match.params.IdMecanismo !== undefined
         ) {
           this.setState({
@@ -793,7 +815,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                   enfile,
                   this.state.mecanismo,
                   'Biblioteca Colabora/Carpeta Revision',
-                ).then((res) => console.log)
+                ).then((res) => )
               })
     
               this.pnp.createdDocumentSet(
@@ -843,8 +865,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                 'Biblioteca Colabora/Carpeta Revision',
                 data,
               )
-              .then((res) => {
-                //console.log("Actualizado con exito")
+              .then((res) => {                
                 this.updateMotivos('Actualización')
               })
           }
@@ -863,23 +884,16 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
   }
 
   private consultarMensajeFinal() {
-    this.pnp
-      .getListItemsRoot('ParametrosGenerales', ['*'], '', '')
-      .then((items) => {
-        var msjFinal = items.filter((x:{Llave:any}) => x.Llave == 'MensajeDeExito')
-        var linkFinal = items.filter((x:{Clave:any}) => x.Clave == 'LinkMensajeFinal')
-        if (msjFinal.length > 0) {
-          this.setState({
-            msjFinal: msjFinal[0].Title,
-          })
-        }
 
-        if (linkFinal.length > 0) {
-          this.setState({
-            linkFinal: linkFinal[0].Title,
-          })
-        }
-      })
+    
+    var msjFinal = (this.props.parametros.filter((elemento: any) => elemento.Llave === "MensajeDeExito")[0] ?? {}).Valor;    
+    var linkFinal = (this.props.parametros.filter((elemento: any) => elemento.Llave === "LinkMensajeFinal")[0] ?? {}).Valor;
+
+    this.setState({
+      msjFinal: msjFinal,
+      linkFinal: linkFinal
+    });
+ 
   }
 
   //Funcion que suma los dias habiles a la fecha de inicio de la labor.
@@ -939,7 +953,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
     }
 
     if (
-      this.props.match.params.opcion == 1 &&
+      this.state.opcion == 1 &&
       this.props.match.params.IdMecanismo !== undefined
     ) {
       this.setState({
@@ -1156,18 +1170,18 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
 
   //Funcion que permite añadir a un array los aprobadores del area
   private _getPeoplePickerG(items: any[], index:any) {
-   /* const cAprobadoresArea = [...this.state.cAprobadoresArea]
+    const cAprobadoresArea = [...this.state.cAprobadoresArea]
     cAprobadoresArea[index]['AprobadoresArea'] = items[0].id
     cAprobadoresArea[index]['AprobadoresAreaEmail'] = items[0].secondaryText
 
     this.setState({
       cAprobadoresArea,
-    })*/
+    })
   }
 
 //Funcion que permite añadir a un array los aprobadores
   private getAprobadoresArea(id:any, index:any) {
-   /* const cAprobadoresArea = [...this.state.cAprobadoresArea]
+   const cAprobadoresArea = [...this.state.cAprobadoresArea]
 
     var items = this.state.AprobadoresArea.filter((x:{ID:any}) => x.ID == id)
 
@@ -1178,53 +1192,35 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
 
     this.setState({
       cAprobadoresArea,
-    })*/
+    })
   }
 
   //Funcion que permite añadir a un array los demas aprobadores del area  
   private getPeoplePickerDemasAprobadores(items: any[], index:any) {
-   /* const cDemasAprobadores = [...this.state.cDemasAprobadores]
+    const cDemasAprobadores = [...this.state.cDemasAprobadores]
 
     cDemasAprobadores[index]['DemasAprobadores'] = items[0].id
     cDemasAprobadores[index]['DemasAprobadoresEmail'] = items[0].secondaryText
 
     this.setState({
       cDemasAprobadores,
-    })*/
+    })
   }
 
   //Funcion que asigna datos desde el directorio activo usando el elemento people picker.
   private getPeoplePickerOtrosAprobadores(items: any[], index:any, rol:any) {
-   /* const cAprobadores = [...this.state.cAprobadores]
+    const cAprobadores = [...this.state.cAprobadores]
 
     cAprobadores[index]['AprobadoresConRol'] = items[0].id
     cAprobadores[index]['Cargo'] = rol
 
     this.setState({
       cAprobadores,
-    })*/
+    })
   }
 
-  // Funion que consulta los paises desde el sitio principal y retorna un objeto con esta informacion.
-  public paises() {
-   /* this.pnp.getListItemsRoot('Paises', ['Title'], '', '').then((res) =>
-      this.setState({
-        paises: res,
-      }),
-    )*/
-  }
+ 
 
-  // Funcion que consulta las direcciones desde el sitio principal y retorna un objeto con esta informacion.
-  public consultarDirecciones() {
-   /* if (this.state.dataMecanismo) {
-      this.setState({
-        direccion: this.state.dataMecanismo.DIreccion,
-      })
-
-      this.consultarAreas(this.state.dataMecanismo.DIreccion)
-    }
-    this.consultarTipoMecanismo()*/
-  }
 
   //Funcion que consulta las areas por direcciones.
   public consultarAreas(nombreDireccion:any) {   
@@ -1233,89 +1229,63 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
         areas: this.state.areasTotal.filter(
           (x:{Direccion:any}) => x.Direccion == nombreDireccion,
         ),
+        
       },
-      () => {
-        if (this.state.dataMecanismo) {
-          this.setState({
-            area: this.state.dataMecanismo.Area,
-          })
-          this.consultarSubarea(this.state.dataMecanismo.Area)
-          this.ConsultarModelos(this.state.dataMecanismo.Area)
-        }
+      () => {        
+         // this.ConsultarModelos(nombreDireccion);        
       },
     )
   }
 
   //Funcion que consulta los driver de cada pilar recibe como parametro el id del pilar al que se le va consultar.
   private consultarDriver(IdPilar:any) {
-   this.pnp
-      .getListItems(
-        'DriverFilial',
-        ['*', 'Pilar/ID'],
-        'Pilar/ID eq ' + IdPilar,
-        'Pilar',
-      )
+       
+    this.pnp
+      .getListItems('Drivers Local',['*', 'ID_x0020_Pilar_x0020_Local/ID'],
+        'ID_x0020_Pilar_x0020_Local/ID eq ' + IdPilar,'ID_x0020_Pilar_x0020_Local',)
       .then((res) =>
         this.setState(
           {
             drivers: res,
-          },
-          () => {
-            if (this.state.dataMecanismo) {
-              if (res.length > 0) {
-                this.setState({
-                  driver: this.state.dataMecanismo.NombreDriverId,
-                })
-
-                this.consultarMecanismo(this.state.dataMecanismo.NombreDriverId)
-              }
-            }
-          },
+          }                
         ),
       )
   }
 
-  //Funcion que consulta los tipos de mecanismo.
+  //Funcion que consulta los tipos de mecanismo
   public consultarTipoMecanismo() {
-   /* this.pnp
-      .getListItems(
-        'ParametrosGenerales',
-        ['*'],
-        "Clave eq 'tipoMecanismo'",
-        '',
-        '',
-      )
-      .then((res) => {
-        if (res.length > 0) {
-          this.setState({
-            tiposMecanismos: res,
-          })
+        this.pnp.getTerms1("c7265500-76f2-40c8-9835-c0a332b66135","5f486236-a2bb-4256-93d7-cf6172bb3dbb").then((items)=>{
+        if(items.length>0){
+         this.setState({
+          tiposMecanismos:items
+   
+         })
         }
-      })*/
+       })
   }
+
+
 
   //Funcion que consulta los mecanismos segun el driver seleccionado.
   public consultarMecanismo(Driver:any) {
 
-   /* if (this.props.match.params.opcion !== "1") {
+   if (this.state.opcion !== "1") {
       this.pnp.getListItems(
-        'MecanismoFilial',
-        ['*', 'NombreDriver/Id'],
-        'NombreDriver/Id eq ' + Driver,
-        'NombreDriver',
+        'Mecanismos Local',
+        ['*', 'ID_x0020_Driver_x0020_Local/Id'],
+        'ID_x0020_Driver_x0020_Local/Id eq ' + Driver,
+        'ID_x0020_Driver_x0020_Local',
       )
         .then((res) => {
 
-          if (res.length > 0) {
+          if (res.length > 0) {          
             this.setState(
               {
                 mecanismos: res,
               },
               () => {
-                if (this.state.dataMecanismo) {
+                if (this.state.dataMecanismo.ID != undefined) {
                   if (res.length > 0) {
-
-
                     this.setState({
                       mecanismo: this.state.dataMecanismo.ID,
                       tipoMecanismo: this.state.dataMecanismo.TipoMecanismo,
@@ -1344,13 +1314,12 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
             )
           }
         })
-    }
-    */
+    }    
   }
 
   //Funcion que consulta los mecanismos segun el driver seleccionado.
   public consultarMecanismoFiltro(Driver:any, seccion:any) {
-    if (this.props.match.params.opcion == 1) {
+    if (this.state.opcion == 1) {
       this.pnp.getListItems(
         'MecanismoFilial',
         ['*', 'NombreDriver/Id', 'NombreDriver/NombreDriver'],
@@ -1365,8 +1334,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
             },
             () => {
               if (this.state.dataMecanismo) {
-                if (res.length > 0) {
-                  console.log(res)
+                if (res.length > 0) {                  
 
                   this.setState({
                     mecanismo: this.state.dataMecanismo.ID,
@@ -1411,8 +1379,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
               },
               () => {
                 if (this.state.dataMecanismo) {
-                  if (res.length > 0) {
-                    console.log(res)
+                  if (res.length > 0) {                    
 
                     this.setState({
                       mecanismo: this.state.dataMecanismo.ID,
@@ -1452,95 +1419,56 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
       .getListItems(
         'MecanismoFilial',
         ['*', ''],
-        'ID eq 71', '').then((items) => {
-          console.log('Email aprobadores'), console.log(items)
+        'ID eq 71', '').then((items) => {          
         })*/
   }
 
   //Funcion que consulta las subareas recibe como parametro el nombre del area.
   public consultarSubarea(nombreArea:any) {
-    this.setState(
-      {
-        subAreas: this.state.subAreasTotal.filter((x:any) => x.Area == nombreArea),
-      },
-      () => {
-        if (this.state.dataMecanismo) {
-          this.setState({
-            subArea: this.state.dataMecanismo.SubArea,
-          })
-          this.ConsultarModelos(this.state.dataMecanismo.subArea)
-        }
-      },
-    )
+
+
+    this.pnp.getListItems("Modelos Local",["Nombre_x0020_Sub_x0020_area"],"Nombre_x0020_Area eq '" + nombreArea + "'" , "","").then((items)=>{
+      if(items.length>0){
+        this.setState({
+          subArea:items
+
+        })
+      }else{
+        this.ConsultarModelos(nombreArea)
+      }
+    })
   }
 
-  //Funcion que consulta los pilares filtrando por el nombre del modelo recibe como parametro el nombre del modelo.
-  public ConsultarPilares(NombreModelo:any) {
-    this.pnp
-      .getListItems(
-        'Pilares Local',
-        ['*', 'ID_x0020_Modelo_x0020_Local/Nombre_x0020_Modelo_x0020_Local'],
-        "No_x0020_Pilar ne 0 and ID_x0020_Modelo_x0020_Local/Nombre_x0020_Modelo_x0020_Local eq '" + NombreModelo + "'",
-        'ID_x0020_Modelo_x0020_Local',
-      )
-      .then((res) => {
-        if (res.length > 0) {
-          this.setState(
-            {
-              pilares: res,
-            },
-            () => {
-              if (this.state.dataMecanismo) {
-                var pilar = res.filter(
-                  (x:{Pilar:any}) => x.Pilar == this.state.dataMecanismo.Pilar,
-                )
 
-                if (pilar.length > 0) {
-                  this.setState({
-                    pilar: pilar[0].ID,
-                  })
-
-                  this.consultarDriver(pilar[0].ID)
-                }
-              }
-            },
-          )
-        }
-      })
-  }
 
   // Funcion que consulta los modelos recibe como parametro el nombre del area o direccion o sub area al cual consultar.
   public ConsultarModelos(NombreCorrespondencia:any) {
-    var filter = NombreCorrespondencia
-
-    this.pnp
-      .getListItems(
-        'Modelos',
-        ['*'],
-        "Correspondencia eq '" + filter + "'",
-        '',"",0,this.props.NombreSubsitio
-      )
-      .then((res) => {
+    this.pnp.getListItems('Pilares Local',
+                            ['*',"ID_x0020_Modelo_x0020_Local/Nombre_x0020_Modelo_x0020_Local"],
+                            "ID_x0020_Modelo_x0020_Local/Nombre_x0020_Modelo_x0020_Local eq '" + NombreCorrespondencia + "'",
+                            'ID_x0020_Modelo_x0020_Local',
+                            "",).then((res) => {
         if (res.length > 0) {
-          this.setState(
-            {
-              modelos: res,
-              pilares: [],
-            },
-            () => {
-              this.ConsultarPilares(res[0].Title)
-            },
+          this.setState({modelos: res,
+              pilares: res,
+            }
           )
         }
       })
   }
+
+
+
 
   //funcion que ayuda a revisar los cambios en los estados de los elementos html.
   public inputChange(target: any) {
     const { name, value } = target;
 
-    console.log(name);
     this.setState({ [name]: value });
+
+
+
+    
 
     switch (name) {
         case 'direccion':
@@ -1574,7 +1502,11 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
             this.handlePlantaChange(value);
             break;
         case 'tipoMecanismo':
-            this.consultarMatrizAprobacion();
+          this.setState({tipoMecanismo:value},()=>{
+            this.consultarMatrizApro(this.state.pais[0].ID,this.state.tipoMecanismo,this.state.nivelesAprobacion);
+
+          })
+          
             break;
         default:
             break;
@@ -1582,9 +1514,8 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
   }
 
   private handleAreaChange(value: any) {
-      
       this.consultarSubarea(value);
-      this.ConsultarModelos(value);
+      this.ConsultarModelos(value)       
   }
 
   private handleOtroMecanismo(value: any) {
@@ -1595,14 +1526,14 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
         descripcionMecanismo: 'Otro Mecanismo Operacional',
       },
       () => {
-        if (this.props.match.params.Acceso == 2) {
-          this.consultarMecanismoFiltro(this.state.driver,'Otro Mecanismo Operacional',)
-        } 
-        else if (this.props.match.params.opcion == "1"){
+        
+        this.consultarMecanismoFiltro(this.state.driver,'Otro Mecanismo Operacional',)
+        
+        if (this.state.opcion == "1"){
           this.setState({NombreMecanismo:1})
         }
         else {
-          if (this.props.match.params.opcion !== "1") {
+          if (this.state.opcion !== "1") {
             this.consultarMecanismo(this.state.driver)
           } else {
             this.setState({
@@ -1630,29 +1561,19 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
         NombreMecanismo: 1,
         descripcionMecanismo: 'Mecanismo del Driver',
         mecanismo: '',
-      },
-      () => {
-        if (this.props.match.params.Acceso == 2) {
-          this.consultarMecanismoFiltro(
-            this.state.driver,
-            'Mecanismo del Driver',
-          )
-        } else {
-        }
-      },
+      }
     )
   }
 
-  private handleDriverChange(value: any) {
+  private handleDriverChange(value: any) {      
       this.consultarMecanismo(value);
       this.consultaMecanismoLocal(value);
   }
 
   private handleContinuar() {
-    const { pasos, posPaso } = this.state;
-      console.log(pasos +"--"+posPaso);
-      if (pasos == 'Datos del Mecanismo') {
-        if (this.props.match.params.opcion === '1') {
+    const { pasos, posPaso } = this.state;      
+      if (this.state.Pasos == 'Datos del Mecanismo') {
+        if (this.state.opcion == 1) {
 
           if (this.state.seguridad === 'Confidencial' && this.state.PersonaSeguridadEmail.length == "") {
             this.setState({falta: true,})
@@ -1700,7 +1621,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
           }
         }
 
-        if (this.props.match.params.opcion !== '1' && this.state.seguridad !== "" &&
+        if (this.state.opcion !== '1' && this.state.seguridad !== "" &&
         this.state.direccion !== undefined &&
         this.state.area !== undefined &&
         this.state.pilar !== "" &&
@@ -1791,15 +1712,15 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
             falta: true,
           })
         } else {
-          if (this.props.match.params.opcion == 3) {
+          if (this.state.opcion == 3) {
             this.ActualizarPlanAccion()
-          } else if (this.props.match.params.opcion == 2) {
+          } else if (this.state.opcion == 2) {
             this.BorrarArchivos()
           } else {
             this.GuardarDocumentos()
           }
         }
-      } else if (this.props.match.params.opcion == 3 && this.state.seguridad !== "" &&
+      } else if (this.state.opcion == 3 && this.state.seguridad !== "" &&
       this.state.direccion !== undefined &&
       this.state.area !== undefined &&
       this.state.pilar !== "" &&
@@ -1814,7 +1735,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
           falta: false,
         })
       }
-      else if (this.props.match.params.opcion == 2 && this.state.seguridad !== "" &&
+      else if (this.state.opcion == 2 && this.state.seguridad !== "" &&
       this.state.direccion !== undefined &&
       this.state.area !== undefined &&
       this.state.pilar !== "" &&
@@ -1852,18 +1773,16 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
     }
   }
 
-
-
   //Funcion para eliminar linea del campo plantas
   private deletePlanta(index:any) {
-    /*const plantasAplica = this.state.plantasAplica
+    const plantasAplica = this.state.plantasAplica
     plantasAplica.splice(index, 1)
 
 
 
     this.setState({
       plantasAplica: plantasAplica,
-    })*/
+    })
   }
 
 //Funcion para eliminar archivos graficamente
@@ -1968,7 +1887,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
               VisorOk:
                 this.props.match.params.Acceso +
                 '/' +
-                this.props.match.params.opcion,
+                this.state.opcion,
             })
           })
         },
@@ -1985,79 +1904,35 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
     })
   }
 
-//FUncion que redirige al home sin recraga la pagina
+  //Funcion que redirige al home sin recraga la pagina
   private redirect() {
     this.props.history.push('/');
   }
 
- 
   //Función que permite consultar los mecanismos según el driver seleccionado
   consultarMecanismoDriver(IdDriver:any) {
-    /*var dataMecanismo = this.state.dataMecanismo
+    var dataMecanismo = this.state.dataMecanismo
 
     this.pnp
-      .getListItems('DriverFilial', ['*'], 'ID eq ' + IdDriver, '')
+      .getListItems('Drivers Local', ['*'], 'ID eq ' + IdDriver, '')
       .then((itemsD) => {
         if (itemsD.length > 0) {
           dataMecanismo['NombreDriverId'] = parseInt(IdDriver)
 
           this.pnp
-            .getListItems(
-              'PilaresFilial',
-              ['*'],
-              'ID eq ' + itemsD[0].PilarId,
-              '',
-            )
+            .getListItems('Pilares Local',['*'],'ID eq ' + itemsD[0].ID_x0020_Pilar_x0020_LocalId,'',)
             .then((itemsP) => {
               if (itemsP.length > 0) {
-                dataMecanismo['Pilar'] = itemsP[0].Pilar
-
-                this.pnp
-                  .getListItems(
-                    'BibliotecaModelos',
-                    ['*'],
-                    'ID eq ' + itemsP[0].NombreModeloId,
-                    '',
-                  )
-                  .then((itemsM) => {
-                    if (itemsM.length > 0) {
-                      dataMecanismo['Area'] = itemsM[0].Correspondencia
-
-                      this.pnp
-                        .getListItemsRoot(
-                          'Area',
-                          ['*', 'NombreDireccion/NombreDireccion'],
-                          "NombreArea eq '" + itemsM[0].Correspondencia + "'",
-                          'NombreDireccion',
-                        )
-                        .then((itemsA) => {
-                          if (itemsA.length > 0) {
-                            dataMecanismo['DIreccion'] =
-                              itemsA[0].NombreDireccion.NombreDireccion
-
-                            this.setState(
-                              {
-                                dataMecanismo: dataMecanismo,
-                              },
-                              () => {
-                                this.CargaInicial()
-                              },
-                            )
-                          }
-                        })
-                    }
-                  })
+                dataMecanismo['Pilar'] = itemsP[0].Pilar                
               }
-            })
-
-          
+            })          
         }
-      })*/
+      })
   }
 
   //Funcion que consulta los datos por medio de un IDmecanismo y trae un array con los datos guardados
   private consultardatos(IdMecanismo:any) {
-   /* this.props.history.push('/CrearContenido/' + this.props.match.params.Acceso + '/' + this.props.match.params.opcion + '/' + IdMecanismo,)
+   /* this.props.history.push('/CrearContenido/' + this.props.match.params.Acceso + '/' + this.state.opcion + '/' + IdMecanismo,)
     
     this.pnp.getListItems(
       'MecanismoFilial',
@@ -2155,10 +2030,6 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
 
     this.state.PersonasAprobadoras.forEach((item:any, index:any) => {
 
-      console.log("Aprobador con rol")
-      console.log(this.state.cAprobadores)
-
-
       AprobadoresConRol.push({
         AprobadoresConRol: item.idUser,
         Cargo: item.rol,
@@ -2189,7 +2060,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
         )
         .then((Apro) => {
           if (Apro.length > 0) {
-            console.log(Apro)
+            
 
             var AprobadoresConRol:any = []
             var AuxAprobadoresConRol = Apro.filter((x:{Title:any}) => x.Title == 'Rol')
@@ -2222,63 +2093,113 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
 
   //Funcion que consulta los motivos de la lista parametrosGenerales y devuelve un objeto con esta informacion.
   private consultarMatrizAprobacion() {
-    /*this.pnp
-      .getListItems(
-        'ParametrosGenerales',
-        ['*'],
-        "Clave eq 'MatrizAprobacion' and Activo eq 1",
-        '',
-      )
-      .then((res) =>
-        this.setState(
-          {
-            MatrizAprobacion: res,
-          },
-          () => {
-            this.ConsultarMatriz(this.state.tipoMecanismo)
-          },
-        ),
-      )*/
+
+        this.setState(this.utilFormulario.consultarMatrizApro(this.state.pais[0].ID,this.state.tipoMecanismo,this.state.nivelesAprobacion),()=>{
+          console.log(this.state.listaUsuarios + ":: lista de usuario")
+          console.log(this.state.aprobadores + ":: aprobadores")
+          console.log(this.state.revisores + ":: revisores")
+          console.log(this.state.elabarador + ":: elabarador")
+          console.log(this.state.nivelesAprobadoresr + ":: nivelesAprobadores")
+          
+        })
+  
+
+
+
   }
 
-  /*Funcion que consulta la matriz por tipo de mecanismo trayendo los roles que interactuan con el tipo de mecanismo
-  private ConsultarMatriz(TipoMecanismo:any) {
-    this.pnp
-      .getListItems(
-        'AprobadoresTipoMecanismo',
-        ['*'],
-        "TipoMecanismo eq '" + TipoMecanismo + "'",
-        '',
-      )
-      .then((matri) => {
-        if (matri.length > 0) {
-          var items = matri[0]
-          var aux = this.state.MatrizAprobacion
+  public consultarNiveles1(){
+    var ViewXml =  `<FieldRef Name="Pais"/>
+    <FieldRef Name="Tipo_x0020_Mecanismo"/>
+    <FieldRef Name="Elabora"/>
+    <FieldRef Name="Revisa"/>
+    <FieldRef Name="Aprueba"/>
+    <FieldRef Name="Area_x0020_Involucrada"/>
+    <FieldRef Name="Jefe_x0020_o_x0020_Gerente_x0020"/>
+    <FieldRef Name="Director_x0020_GH"/>
+    <FieldRef Name="Director_x0020_area"/>
+    <FieldRef Name="Director_x0020_General"/>
+    <FieldRef Name="Presidente_x0020_Ejecutivo"/>
+    <FieldRef Name="Lider_x0020_de_x0020_modelo_x002"/>`;
 
-          var auxMatriz:any = []
+    var FilterXml =  `  <Query>
+        <Where>
 
-          aux.forEach((item:any, index:any) => {
-            var valor = items[item.Title]
+            <FieldRef Name="PaisId" />
+            <Value Type='Number'>${this.state.pais[0].ID}</Value>
+                            
+    </Where>
+</Query>`
 
-            if (valor == true) {
-              auxMatriz.push(item.Title)
-            }
-          })
+    this.pnp.getListItemsWithTaxo('root',"Niveles de aprobacion",ViewXml,FilterXml).then((items)=>{
+        this.setState({nivelesAprobacion:items})
+        console.log("Funciones consulta paises")
+        console.log(items)
+    })
 
-          this.setState(
-           
-            {
-              MatrizRol: auxMatriz,
-            },
-            () => {
-              this.consultarMatrizApro()
-              console.log(this.state.MatrizRol)
-            },
-          )
-        }
-      })
-  }*/  
+ 
+
+
+
+
+
+
+   }
+
+
+
+
+// Consulta los usuarios que aprueban por dirección y área
+public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) {
+
+  const ViewXml = `
+  <FieldRef Name="ID"/>
+  <FieldRef Name="Pais"/>
+  <FieldRef Name="Tipo_x0020_Mecanismo"/>
+  <FieldRef Name="Revisor"/>
+  <FieldRef Name="Publicador"/>
+  <FieldRef Name="Aprobador_x0020_Revisa"/>
+  <FieldRef Name="Gerente_x0020_de_x0020_Area"/>
+  <FieldRef Name="AuditorId"/>
+  <FieldRef Name="Jefe_x0020_o_x0020_Gerente_x0020"/>
+  <FieldRef Name="DirectorGH"/>
+  <FieldRef Name="Director_x0020_area"/>
+  <FieldRef Name="Director_x0020_General"/>
+  <FieldRef Name="Presidente_x0020_Ejecutivo"/>
+  <FieldRef Name="Lider_x0020_de_x0020_modelo_x002"/>
+  <FieldRef Name="IdModeloLocal"/>`;
+
+  const filterXml = `
+  <Query>
+      <Where>
+          <Eq>
+              <FieldRef Name="Tipo_x0020_Mecanismo" />
+              <Value Type='tipoMecanismo'>${tipomecanismo}</Value>
+          </Eq>
+          <Eq>
+              <FieldRef Name="PaisId" />
+              <Value Type='Number'>${paisId}</Value>
+          </Eq>                       
+      </Where>
+  </Query>`;
+
+  this.pnp.getListItemsWithTaxo('root', 'Matriz de revision publicacion y aprobacion', ViewXml, filterXml).then((items)=>{
+    console.log(items)
+  })
+
+
+
+
+  this.utilFormulario.consultarMatrizApro(paisId,tipomecanismo,niveles)
+        
   
+  
+  
+  
+  
+}
+
+
   
   /*Consulta los usuario que aprueban por direccion y area
   private consultarMatrizApro() {
@@ -2372,8 +2293,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
       CantidadCaracteres: result
 
     })
-
-    console.log(result)
+    
     */
   }
 
@@ -2386,8 +2306,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
         "ID eq '" + idMecanismo + "' ",
         '',
       )
-      .then(respuesta=>{
-        console.log(respuesta);
+      .then(respuesta=>{        
         this.setState({
           tipoMecanismo:respuesta[0].TipoMecanismo,
           Auditoria:respuesta[0].RequiereAuditoria,
@@ -2398,12 +2317,10 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
   }
 
   public render(): React.ReactElement<ICrearContenidoProps> {
-    if (
-      this.props.match.params.Acceso + '/' + this.props.match.params.opcion !=
-      this.state.VisorOk
-    ) {
-      window.location.reload()
-    }
+    /*if (this.state.opcion != this.state.VisorOk) 
+    {
+      this.props.opcion != undefined ? null: window.location.reload()
+    }*/
 
     return (
       <>
@@ -2451,21 +2368,16 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                 className="container-xxl d-flex flex-stack flex-wrap"
               >
                 <div className="page-title d-flex flex-column me-3">
-                  {this.props.match.params.opcion == 1 ? (
-                    <h1 id="contentn" className="d-flex text-dark fw-bolder my-1 fs-2">
-                      Creación de Contenido
-                    </h1>
+                  {this.state.opcion == 1 ? (
+                    <h1 id="contentn" className="d-flex text-dark fw-bolder my-1 fs-2"> Creación de Contenido </h1>
                   ) : null}
-                  {this.props.match.params.opcion == 2 ? (
-                    <h1
-                      id="contentn"
-                      className="d-flex text-dark fw-bolder my-1 fs-2"
-                    >
+                  {this.state.opcion == 2 ? (
+                    <h1 id="contentn" className="d-flex text-dark fw-bolder my-1 fs-2">
                       Eliminación de Contenido
                     </h1>
                   ) : null}
 
-                  {this.props.match.params.opcion == 3 ? (
+                  {this.state.opcion == 3 ? (
                     <h1
                       id="contentn"
                       className="d-flex text-dark fw-bolder my-1 fs-2"
@@ -2497,10 +2409,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                   {!this.state.enviado ? (
                     <div className="stepper-nav flex-center flex-wrap mb-10">
                       {this.state.secciones.map((s:any, index:any) => (
-                        <div className={this.state.Pasos == s.Title
-                              ? 'stepper-item mx-2 my-4 current'
-                              : 'stepper-item mx-2 my-4 pending'
-                          }>
+                        <div className={this.state.Pasos == s.Title? 'stepper-item mx-2 my-4 current': 'stepper-item mx-2 my-4 pending'}>
                           <div className="stepper-line w-40px"></div>
                           <div className="stepper-icon w-40px h-40px">
                             <i className="stepper-check fas fa-check"></i>
@@ -2517,11 +2426,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
 
                 <div className="card">
                   <div className="card-body">
-                    <div
-                      className="stepper stepper-pills first"
-                      id="kt_stepper_example_clickable"
-                      data-kt-stepper="true"
-                    >                    
+                    <div className="stepper stepper-pills first" id="kt_stepper_example_clickable" data-kt-stepper="true">                    
                       <form className="form mx-auto" id="kt_stepper_example_basic_form">
                         <div className="mb-5">
                           <div>
@@ -2536,8 +2441,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                     </h3>
                                   </div>
                                 </div>
-                                <div className="row mb-5 contenform">
-                                  {this.props.Subsitio == false ? (
+                                <div className="row mb-5 contenform">                                  
                                     <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                                       <label className="form-label required">
                                         País
@@ -2548,41 +2452,22 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                         className="form-control"
                                         name="input2"
                                         placeholder="."
-                                        value={this.state.NombreConvertido}
+                                        value={this.state.pais[0].Nombre_x0020_Pais}
                                         disabled
                                       />
-                                    </div>
-                                  ) : (
-                                    <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
-                                      <label className="form-label required">
-                                        País
-                                      </label>
-                                      <input
-                                        style={{ height: '56%' }}
-                                        type="text"
-                                        className="form-control"
-                                        name="input2"
-                                        placeholder="."
-                                        value={this.state.NombreConvertido}
-                                        disabled
-                                      />
-                                    </div>
-                                  )}
+                                    </div>                                  
 
                                   <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                                     <label className="form-label required">
                                       Dirección
                                     </label>
 
-                                    {this.state.direcciones &&
-                                      this.state.direcciones.length > 0 ? (
+                                    {this.state.direcciones && this.state.direcciones.length > 0 || this.props.match.params.Acceso == 2 ? (
                                       <select
                                         name="direccion"
                                         value={this.state.direccion}
                                         className="form-select select2-hidden-accessible"
-                                        onChange={(e) => {
-                                          this.inputChange(e.target)
-                                        }}
+                                        onChange={(e) => {this.inputChange(e.target)}}
                                         data-control="select2"
                                         data-placeholder="Select an option"
                                         data-select2-id="select2-data-1-k7cj"
@@ -2600,12 +2485,9 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                     ) : null}
                                   </div>
 
-                                  {this.state.areas &&
-                                    this.state.areas.length > 0 ? (
+                                  {this.state.areas && this.state.areas.length > 0 || this.props.match.params.Acceso == 2 ? (
                                     <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
-                                      <label className="form-label required">
-                                        Área
-                                      </label>
+                                      <label className="form-label required">Área</label>
 
                                       <select
                                         name="area"
@@ -2661,8 +2543,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                     </div>
                                   ) : null}
 
-                                  {this.state.pilares &&
-                                    this.state.pilares.length > 0 ? (
+                                  {this.state.pilares && this.state.pilares.length > 0 || this.props.match.params.Acceso == 2 ? (
                                     <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                                       <label className="form-label required">
                                         Pilar
@@ -2681,15 +2562,12 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                         disabled={this.state.disabled}
                                         aria-hidden="true"
                                       >
-                                        <option
-                                          data-select2-id="select2-data-9-da1c"
-                                          value="0"
-                                        >
+                                        <option data-select2-id="select2-data-9-da1c" value="0">
                                           seleccionar...
                                         </option>
 
                                         {this.state.pilares.map((e:any) => (
-                                          <option value={e.Id}>{e.Title}</option>
+                                          <option value={e.Id}>{e.No_x0020_Pilar}.{e.Pilar}</option>
                                         ))}
                                       </select>
                                     </div>
@@ -2729,7 +2607,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
 
                                             {this.state.pilar != "No Aplica" ?
                                               this.state.drivers.map((e:any) => (
-                                                <option value={e.Title}>{e.Title}</option>
+                                                <option value={e.ID}>{e.Nombre_x0020_Driver}</option>
                                               )) : null}
                                           </select>
                                           :
@@ -2784,9 +2662,9 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                     <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 marginBottom">
                                       <div className="d-flex">
                                         <span className="form-check">
-                                          {this.props.match.params.opcion !== '1' && this.props.match.params.Acceso !== '2' || this.props.match.params.IdMecanismo !== undefined ? (
+                                          {this.state.opcion !== '1' || this.props.match.params.IdMecanismo !== undefined ? (
                                             <input
-                                              disabled
+                                       
                                               placeholder='.'
                                               className="form-check-input"
                                               type="radio"
@@ -2801,13 +2679,10 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                             />
                                           ) : (
                                             <input
-                                              disabled={this.state.MecanismosDelDriverLocal}
                                               placeholder='.'
                                               className="form-check-input"
                                               type="radio"
-                                              checked={
-                                                this.state.descripcionMecanismo === 'Mecanismo del Driver'
-                                              }
+                                              checked={this.state.descripcionMecanismo === 'Mecanismo del Driver'}
                                               name="MecanismoDriver"
                                               value="Mecanismo del Driver"
                                               onChange={(e) => {
@@ -2817,26 +2692,25 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                             />
                                           )}
                                         </span>
-
-
-
-
                                         <label className="form-check-label pe-10 fs-5" htmlFor="flexRadioDefault">
                                           Mecanismo del driver
                                         </label>
-
                                         <span className="form-check">
-                                          {this.props.match.params.opcion !== '1' && this.props.match.params.Acceso !== '2' || this.props.match.params.IdMecanismo !== undefined ? (
-                                            <input disabled placeholder='.' className="form-check-input"
+                                          {this.state.opcion !== '1' || this.props.match.params.IdMecanismo !== undefined ? (
+                                            <input  placeholder='.' className="form-check-input"
                                               type="radio" name="OtroMecanismo"
                                               value="Otro Mecanismo Operacional"
+                                              onChange={(e) => {
+                                                this.setState({NombreMecanismo:0},()=>{this.setState({NombreMecanismo:1,Auditoria:false,mecanismoLocal:"",tipoMecanismo:""})} )
+                                                this.inputChange(e.target)
+                                              
+                                              }}
                                               checked={
                                                 this.state.descripcionMecanismo === 'Otro Mecanismo Operacional'
                                               }
                                             />
                                           ) : (
                                             <input
-                                              disabled={this.state.OtroMecanismoOperacionalDriver}
                                               placeholder='.'
                                               className="form-check-input"
                                               type="radio"
@@ -2861,32 +2735,31 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                   </div>
 
                                   
-                                    {this.props.match.params.opcion == "1" && this.props.match.params.IdMecanismo ? (
+                                  {this.state.opcion == "1" && this.props.match.params.IdMecanismo ? (
                                       
                                     <div className="row">
-                                      <div className="col-lg-6 col-md-4 col-xl-6 col-xxl-6 marginBottom">
-                                      
+                                      <div className="col-lg-6 col-md-4 col-xl-6 col-xxl-6 marginBottom">                                      
                                               <label className="form-label required">
                                                 Nombre del Mecanismo Local
                                               </label>
-                                              {this.props.match.params.opcion == 1 ? (
-                                          <input
-                                            disabled
-                                            type="text"
-                                            name="mecanismo"
-                                            value={this.state.NombreMecanismo1}
-                                            className="form-select select2-hidden-accessible"
-                                            placeholder="."
-                                            //disabled={this.state.disabled && this.props.match.params.opcion !=="1"}
-                                            onChange={(e) => {
-                                              this.setState({
-                                                mecanismoNombre1: e.target.value,
-                                                mecanismo: e.target.value
-                                              })
-                                            }}
-                                          />
-                                        ) : this.state.mecanismos &&
-                                          this.state.mecanismos.length > 0 ? (
+                                          {this.state.opcion == 1 ? (
+                                            <input
+                                              disabled
+                                              id="inputMdecanismo"
+                                              type="text"
+                                              name="mecanismo"
+                                              value={this.state.NombreMecanismo1}
+                                              className="form-select select2-hidden-accessible"
+                                              placeholder="."
+                                              //disabled={this.state.disabled && this.state.opcion !=="1"}
+                                              onChange={(e) => {
+                                                this.setState({
+                                                  mecanismoNombre1: e.target.value,
+                                                  mecanismo: e.target.value
+                                                })
+                                              }}
+                                            />
+                                        ) : this.state.mecanismos && this.state.mecanismos.length > 0 ? (
                                           <select
                                             name="mecanismo"
                                             value={this.state.NombreMecanismo1}
@@ -2897,7 +2770,6 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                             data-control="select2"
                                             data-placeholder="Select an option"
                                             data-select2-id="select2-data-7-njhs"
-                                            disabled={this.state.disabled}
                                             aria-hidden="true"
                                           >
                                             <option
@@ -2913,36 +2785,17 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                               </option>
                                             ))}
                                           </select>
-                                        ) : null}
-                                      
-                                        <label className="form-label required">
-                                          Nombre del Mecanismo 
-                                        </label>
-                                        <span className="FAQ">
-                                          <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            width="16"
-                                            height="16"
-                                            fill="currentColor"
-                                            className="bi bi-info-circle"
-                                            viewBox="0 0 16 16"
-                                          >
-                                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                                            <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
-                                          </svg>
-                                          <span className="modalFAQ">
-                                            {this.state.FaqSeguridad}
-                                          </span>
-                                        </span>
+                                        ) : null}                                      
 
-                                        {this.props.match.params.opcion == 1 ? (
+                                        {this.state.opcion == 1 ? (
                                           <input
                                             type="text"
+                                            id="inputMdecanismo"
                                             name="mecanismo"
                                             value={this.state.mecanismoNombre1}
                                             className="form-control"
                                             placeholder="."
-                                            //disabled={this.state.disabled && this.props.match.params.opcion !=="1"}
+                                            //disabled={this.state.disabled && this.state.opcion !=="1"}
                                             onChange={(e) => {
                                               this.setState({
                                                 mecanismoNombre1: e.target.value,
@@ -2998,7 +2851,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                             data-select2-id="select2-data-7-njhs"
                                             disabled={
                                               this.state.disabled &&
-                                              this.props.match.params.opcion !==
+                                              this.state.opcion !==
                                               '1'
                                             }
                                             aria-hidden="true"
@@ -3012,8 +2865,8 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
 
                                             {this.state.tiposMecanismos.map(
                                               (e:any) => (
-                                                <option value={e.Title}>
-                                                  {e.Title}
+                                                <option value={e.labels[0].name}>
+                                                  {e.labels[0].name}
                                                 </option>
                                               ),
                                             )}
@@ -3023,48 +2876,36 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                     </div>
                                   ) : null} 
 
-                                  {this.props.match.params.opcion == 1 && this.props.match.params.IdMecanismo ==undefined? (
+                                  {this.state.opcion == 1 && this.props.match.params.IdMecanismo == undefined? (
                                     <div className="row">
                                       <div className="col-4">
                                         {
                                           this.state.NombreMecanismo==2?
                                             <>
-                                              <label className="form-label required">
-                                                Nombre del Mecanismo Local
-                                              </label>
-                                              <select
-                                                title='.'
-                                                className="form-select select2-hidden-accessible"
+                                              <label className="form-label required">Nombre del Mecanismo Local</label>
+                                              <select title='.' className="form-select select2-hidden-accessible"
                                                 onChange={(e) => {
                                                   this.setState({
-
                                                     Auditoria:false,
                                                     mecanismo: e.target.value.split("|")[0],
                                                     mecanismoLocal: e.target.value,
                                                     idMecanismo: e.target.value.split("|")[1]
-                                                  })
-                                                  
+                                                  })                                                  
                                                   this.verificarAuditoria(e.target.value.split("|")[1]);
-                                                  this.consultarMatrizAprobacion()
-                                                  
+                                                  this.consultarMatrizAprobacion()                                                  
                                                 }}
                                                 value={this.state.mecanismoLocal}
-                                              >
-                                                <option>Seleccionar...</option>
-
-                                          
-                                                {this.state.mecanismosBase.map((e:any) => {
-                                                  
-                                                  if (e.SeccionMecanismo == "Mecanismo del Driver"){
-                                                    
+                                                >
+                                                <option>Seleccionar...</option>                                          
+                                                {this.state.mecanismosBase.map((e:any) => {                                                  
+                                                  if (e.SeccionMecanismo == "Mecanismo del Driver"){                                                    
                                                     return(
                                                       <option value={`${e.NombreMecanismo}|${e.ID}`}>
                                                         {' '}
                                                         {e.NombreMecanismo}
                                                       </option>
                                                       )
-                                                  }
-                                                 
+                                                  }                                                 
                                                 })}
                                               </select>
                                             </>
@@ -3122,39 +2963,20 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                             : null}
 
                                       </div>
+
                                       {this.state.mecanismoLocal && this.state.mecanismoLocal.length > 0 ? (
                                         <>
                                           <div className="col-4 marginBottom">
-                                            {this.props.match.params.opcion == 1 || this.state.descripcionMecanismo === 'Otro Mecanismo Operacional' ||  this.state.mecanismoLocal=="NuevoMecanismoOperacional" ? (
-                                              <>
-                                              
-                                                <label className="form-label required">
-                                                  Nombre del Mecanismo
-                                                </label>
-                                                <span className="FAQ">
-                                                  <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    width="16"
-                                                    height="16"
-                                                    fill="currentColor"
-                                                    className="bi bi-info-circle"
-                                                    viewBox="0 0 16 16"
-                                                  >
-                                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                                                    <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
-                                                  </svg>
-                                                  <span className="modalFAQ">
-                                                    {this.state.FaqSeguridad}
-                                                  </span>
-                                                </span>
-
-                                                <input                                                
+                                            {this.state.opcion == 1 || this.state.descripcionMecanismo === 'Otro Mecanismo Operacional' ||  this.state.mecanismoLocal=="NuevoMecanismoOperacional" ? (
+                                              <>                                                                                              
+                                                <input
+                                                id="inputMdecanismo"                                                
                                                   name="mecanismo"
                                                   value={this.state.mecanismo}
                                                   className="form-control"
                                                   placeholder="."
                                                   disabled={
-                                                    this.props.match.params.opcion !== '1'
+                                                    this.state.opcion !== '1'
                                                   }
                                                   onChange={(e) => {
                                                     this.setState({
@@ -3215,7 +3037,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                             data-select2-id="select2-data-7-njhs"
                                             disabled={
                                               this.state.disabled &&
-                                              this.props.match.params.opcion !==
+                                              this.state.opcion !==
                                               '1'
                                             }
                                             aria-hidden="true"
@@ -3229,8 +3051,8 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
 
                                             {this.state.tiposMecanismos.map(
                                               (e:any) => (
-                                                <option value={e.Title}>
-                                                  {e.Title}
+                                                <option value={e.labels[0].name}>
+                                                  {e.labels[0].name}
                                                 </option>
                                               ),
                                             )}
@@ -3242,7 +3064,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                     </div>
                                   ) : null}
 
-                                  {this.state.NombreMecanismo == 2 && this.props.match.params.opcion !== "1" ? (
+                                  {this.state.NombreMecanismo == 2 && this.state.opcion !== "1" ? (
                                     <div className="row">
                                       <div className="col-lg-6 col-md-4 col-xl-6 col-xxl-6 marginBottom">
                                         
@@ -3250,30 +3072,21 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                           Nombre del Mecanismo Local
                                         </label>
                                         <span className="FAQ">
-                                          <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            width="16"
-                                            height="16"
-                                            fill="currentColor"
-                                            className="bi bi-info-circle"
-                                            viewBox="0 0 16 16"
-                                          >
-                                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                                            <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
-                                          </svg>
+                                          <SVGIconComponent iconType='M8' />
+
                                           <span className="modalFAQ">
                                             {this.state.FaqSeguridad}
                                           </span>
                                         </span>
 
-                                        {this.props.match.params.opcion == 1 ? (
+                                        {this.state.opcion == 1 ? (
                                           <input
                                             type="text"
                                             name="mecanismo"
                                             value={this.state.mecanismoNombre1}
                                             className="form-control"
                                             placeholder="."
-                                            //disabled={this.state.disabled && this.props.match.params.opcion !=="1"}
+                                            //disabled={this.state.disabled && this.state.opcion !=="1"}
                                             onChange={(e) => {
                                               this.setState({
                                                 mecanismoNombre1: e.target.value,
@@ -3330,7 +3143,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                             data-select2-id="select2-data-7-njhs"
                                             disabled={
                                               this.state.disabled &&
-                                              this.props.match.params.opcion !==
+                                              this.state.opcion !==
                                               '1'
                                             }
                                             aria-hidden="true"
@@ -3344,8 +3157,8 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
 
                                             {this.state.tiposMecanismos.map(
                                               (e:any) => (
-                                                <option value={e.Title}>
-                                                  {e.Title}
+                                                <option value={e.labels[0].name}>
+                                                  {e.labels[0].name}
                                                 </option>
                                               ),
                                             )}
@@ -3367,24 +3180,14 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                         Seguridad
                                       </span>
                                       <span className="FAQ">
-                                        <svg
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          width="16"
-                                          height="16"
-                                          fill="currentColor"
-                                          className="bi bi-info-circle"
-                                          viewBox="0 0 16 16"
-                                        >
-                                          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                                          <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
-                                        </svg>
+                                        <SVGIconComponent iconType='M8' />
                                         <span className="modalFAQ">
                                           {this.state.FaqSeguridad}
                                         </span>
                                       </span>
                                     </label>
                                     <br />
-                                    {this.props.match.params.opcion != 1 ? (
+                                    {this.state.opcion != 1 ? (
                                       <div className="d-flex">
                                         <span className="form-check">
                                           <input
@@ -3558,14 +3361,14 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                       </label>
 
                                       <PeoplePicker
-                                        context={this.props.context}
+                                        context={this.props.webPartContext}
                                         titleText=""
                                         personSelectionLimit={100}
                                         groupName={''}
                                         showtooltip={true}
                                         required={true}
                                         disabled={
-                                          this.props.match.params.opcion !== '1'
+                                          this.state.opcion !== '1'
                                             ? true
                                             : false
                                         }
@@ -3585,7 +3388,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                 <div className="row mb-5 contenform">
                                   <div className="mt-4">
                                     <label className="form-check form-switch form-check-custom">
-                                      {this.props.match.params.opcion != 1 /*|| this.state.NombreMecanismo == 1*/ || this.props.match.params.IdMecanismo !== undefined ? (
+                                      {this.state.opcion != 1 /*|| this.state.NombreMecanismo == 1*/ || this.props.match.params.IdMecanismo !== undefined ? (
                                         <input
                                           disabled
                                           className="form-check-input"
@@ -3624,7 +3427,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
 
                                   <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 mt-4">
                                     <label className="form-check form-switch form-check-custom">
-                                      {this.props.match.params.opcion != 1 ? (
+                                      {this.state.opcion != 1 ? (
                                         <input
                                           disabled
                                           className="form-check-input"
@@ -3659,18 +3462,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                       </span>
 
                                       <span className="FAQ">
-                                        <svg
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          width="16"
-                                          height="16"
-                                          fill="currentColor"
-                                          className="bi bi-info-circle"
-                                          viewBox="0 0 16 16"
-                                        >
-                                          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                                          <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
-                                        </svg>
-
+                                        <SVGIconComponent iconType='M8' />
                                         <span className="modalFAQ">
                                           {this.state.FaqPlantaProduccion}
                                         </span>
@@ -3696,7 +3488,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                           name="planta"
                                           data-placeholder="Select an option"
                                           data-select2-id="select2-data-19-5jji"
-                                          disabled={this.props.match.params.opcion !== "2" ? false : true}
+                                          disabled={this.state.opcion !== "2" ? false : true}
                                           aria-hidden="true"
                                         >
                                           <option
@@ -3705,9 +3497,9 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                           >
                                             Seleccionar...
                                           </option>
-                                          {this.state.plantas.map((e:any) => (
-                                            <option value={e.Title}>
-                                              {e.Title}
+                                          {this.state.plantas.map((e:any,i:any) => (
+                                            <option value={e.labels[0].name}>
+                                              {e.labels[0].name}
                                             </option>
                                           ))}
                                         </select>
@@ -3719,7 +3511,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                             <tr>
                                               <td>- {p}</td>
                                               {
-                                                this.props.match.params.opcion !== "2" ?
+                                                this.state.opcion !== "2" ?
 
                                                   <td>
                                                     <span
@@ -3727,20 +3519,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                                         this.deletePlanta(i)
                                                       }}
                                                     >
-                                                      <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        width="16"
-                                                        height="16"
-                                                        fill="currentColor"
-                                                        className="bi bi-trash"
-                                                        viewBox="0 0 16 16"
-                                                      >
-                                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
-                                                        <path
-                                                          fill-rule="evenodd"
-                                                          d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"
-                                                        />
-                                                      </svg>
+                                                      <SVGIconComponent iconType='M5' />
                                                     </span>
                                                   </td>
 
@@ -3757,27 +3536,12 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                 <div className="separator mt-4 mb-4"></div>
 
                                 <div className="row mb-5 pl">
-                                  {this.props.match.params.opcion == 1 || this.props.match.params.opcion == 3 ? (
+                                  {this.state.opcion == 1 || this.state.opcion == 3 ? (
                                     <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 mt-1">
                                       <label htmlFor="files">
                                         <h4>
-                                          <span>
-                                            Adjuntar contenidos a publicar
-                                          </span>
-
-                                          <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            width="15"
-                                            height="15"
-                                            fill="currentColor"
-                                            className="bi bi-plus-lg"
-                                            viewBox="0 0 16 16"
-                                          >
-                                            <path
-                                              fill-rule="evenodd"
-                                              d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"
-                                            />
-                                          </svg>
+                                          <span>Adjuntar contenidos a publicar</span>
+                                          <SVGIconComponent iconType='M8.2' />
                                         </h4>
                                       </label>
                                     </div>
@@ -3810,20 +3574,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                           onClick={() => {
                                             this.deleteArchivo(index)
                                           }} >
-                                          <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            width="16"
-                                            height="16"
-                                            fill="currentColor"
-                                            className="bi bi-trash"
-                                            viewBox="0 0 16 16"
-                                          >
-                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
-                                            <path
-                                              fill-rule="evenodd"
-                                              d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"
-                                            />
-                                          </svg>
+                                          <SVGIconComponent iconType='M5' />
                                         </span>
                                       </div>
                                     ))
@@ -3834,7 +3585,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                   </div>
                                 </div>
 
-                                {this.props.match.params.opcion == 3 ? (
+                                {this.state.opcion == 3 ? (
                                   <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 marginBottom mb-2">
                                     <div className="d-flex">
                                       <span className="form-check">
@@ -3898,7 +3649,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                   </div>
                                 ) : null}
 
-                                {this.props.match.params.opcion == 1 ? (
+                                {this.state.opcion == 1 ? (
                                   <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 marginBottom mb-2">
                                     <div className="d-flex">
                                       <span className="form-check">
@@ -3966,17 +3717,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                 <br />
                                 {this.state.falta == true ? (
                                   <div className="alert alert-danger" role="alert">
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="16"
-                                      height="16"
-                                      fill="currentColor"
-                                      className="bi bi-info-circle"
-                                      viewBox="0 0 16 16"
-                                    >
-                                      <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                                      <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
-                                    </svg>
+                                    <SVGIconComponent iconType='M5' />
                                     Debe diligenciar todos los campos obligatorios
                                     para continuar.
                                   </div>
@@ -4023,17 +3764,8 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                               <div className="row mt-5">
                                 <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12">
                                   <div className="alert alert-warning d-flex align-items-center p-5">
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="20"
-                                      height="20"
-                                      fill="currentColor"
-                                      className="bi bi-exclamation-triangle"
-                                      viewBox="0 0 16 16"
-                                    >
-                                      <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z" />
-                                      <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z" />
-                                    </svg>
+                                    <SVGIconComponent iconType='M7' />
+
                                     <span className="svg-icon svg-icon-2hx svg-icon-warning me-4">
                                       <i className="fa fa-exclamation-triangle fs-4 text-warning"></i>
                                     </span>
@@ -4071,17 +3803,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                   </span>
 
                                   <span className="FAQ">
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="16"
-                                      height="16"
-                                      fill="currentColor"
-                                      className="bi bi-info-circle"
-                                      viewBox="0 0 16 16"
-                                    >
-                                      <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                                      <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
-                                    </svg>
+                                    <SVGIconComponent iconType='M8' />
 
                                     <span className="modalFAQ">
                                       {this.state.faqDocumentosMecanismo}
@@ -4161,17 +3883,8 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                     className="alert alert-danger"
                                     role="alert">
 
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="16"
-                                      height="16"
-                                      fill="currentColor"
-                                      className="bi bi-info-circle"
-                                      viewBox="0 0 16 16"
-                                    >
-                                      <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                                      <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
-                                    </svg>
+                                    <SVGIconComponent iconType='M8' />
+
                                     Debe diligenciar todos los campos
                                     obligatorios para continuar.
                                   </div>
@@ -4182,17 +3895,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                     id="allDelete"
                                     className="alert alert-warning"
                                   >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="20"
-                                      height="20"
-                                      fill="currentColor"
-                                      className="bi bi-exclamation-triangle"
-                                      viewBox="0 0 16 16"
-                                    >
-                                      <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z" />
-                                      <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z" />
-                                    </svg>
+                                   <SVGIconComponent iconType='M7' />
 
                                     <span>
                                       Esta solicitud aplica un formulario de
@@ -4220,7 +3923,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                       Elabora
                                     </label>
                                     <PeoplePicker
-                                      context={this.props.context}
+                                      context={this.props.webPartContext}
                                       titleText=""
                                       personSelectionLimit={1}
                                       groupName={''}
@@ -4248,7 +3951,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                       Revisa
                                     </label>
                                     <PeoplePicker
-                                      context={this.props.context}
+                                      context={this.props.webPartContext}
                                       titleText=""
                                       personSelectionLimit={1}
                                       groupName={''}
@@ -4277,7 +3980,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                       Aprueba
                                     </label>
                                     <PeoplePicker
-                                      context={this.props.context}
+                                      context={this.props.webPartContext}
                                       titleText=""
                                       personSelectionLimit={1}
                                       groupName={''}
@@ -4396,12 +4099,11 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                           <div className="col-lg-3 col-md-3 col-xl-3 marginBottom">
                                             <label>Aprobador</label>{' '}
                                             {
-                                              this.state.cAprobadoresArea[index]
-                                                .Area
+                                              this.state.cAprobadoresArea[index].Area
                                             }
                                             <PeoplePicker
                                               disabled
-                                              context={this.props.context}
+                                              context={this.props.webPartContext}
                                               titleText=""
                                               personSelectionLimit={1}
                                               groupName={''}
@@ -4439,21 +4141,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                                   )
                                                 }
                                               >
-                                                <svg
-                                                  id="Scrap"
-                                                  xmlns="http://www.w3.org/2000/svg"
-                                                  width="16"
-                                                  height="16"
-                                                  fill="currentColor"
-                                                  className="bi bi-trash"
-                                                  viewBox="0 0 16 16"
-                                                >
-                                                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
-                                                  <path
-                                                    fill-rule="evenodd"
-                                                    d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"
-                                                  />
-                                                </svg>
+                                                <SVGIconComponent iconType='M5' />
                                               </span>
                                             </div>
                                           ) : null}
@@ -4473,7 +4161,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                         </label>
 
                                         <PeoplePicker
-                                          context={this.props.context}
+                                          context={this.props.webPartContext}
                                           personSelectionLimit={1}
                                           groupName={''}
                                           showtooltip={true}
@@ -4514,7 +4202,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                           </label>
 
                                           <PeoplePicker
-                                            context={this.props.context}
+                                            context={this.props.webPartContext}
                                             personSelectionLimit={1}
                                             groupName={''}
                                             showtooltip={true}
@@ -4551,17 +4239,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                       <h4>Agregar Aprobadores</h4>
 
                                       <span className="FAQ">
-                                        <svg
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          width="16"
-                                          height="16"
-                                          fill="currentColor"
-                                          className="bi bi-info-circle"
-                                          viewBox="0 0 16 16"
-                                        >
-                                          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                                          <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
-                                        </svg>
+                                       <SVGIconComponent iconType='M8' />
 
                                         <span className="modalFAQ">
                                           {this.state.faqAprobadores}
@@ -4593,7 +4271,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                           </div>
                                           <div className="col-lg-5 col-md-5 col-xl-5 col-xxl-5 marginBottom">
                                             <PeoplePicker
-                                              context={this.props.context}
+                                              context={this.props.webPartContext}
                                               titleText=""
                                               personSelectionLimit={1}
                                               groupName={''}
@@ -4632,20 +4310,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                                   )
                                                 }
                                               >
-                                                <svg
-                                                  xmlns="http://www.w3.org/2000/svg"
-                                                  width="16"
-                                                  height="16"
-                                                  fill="currentColor"
-                                                  className="bi bi-trash"
-                                                  viewBox="0 0 16 16"
-                                                >
-                                                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
-                                                  <path
-                                                    fill-rule="evenodd"
-                                                    d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"
-                                                  />
-                                                </svg>
+                                                <SVGIconComponent iconType='M5' />
                                               </span>
                                             </div>
                                           ) : null}
@@ -4667,17 +4332,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                       className="text-primary text-hover-primary fs-3"
                                     >
                                       <i className="fas fa-link text-primary"></i>
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="25"
-                                        height="25"
-                                        fill="currentColor"
-                                        className="bi bi-link"
-                                        viewBox="0 0 17 18"
-                                      >
-                                        <path d="M6.354 5.5H4a3 3 0 0 0 0 6h3a3 3 0 0 0 2.83-4H9c-.086 0-.17.01-.25.031A2 2 0 0 1 7 10.5H4a2 2 0 1 1 0-4h1.535c.218-.376.495-.714.82-1z" />
-                                        <path d="M9 5.5a3 3 0 0 0-2.83 4h1.098A2 2 0 0 1 9 6.5h3a2 2 0 1 1 0 4h-1.535a4.02 4.02 0 0 1-.82 1H12a3 3 0 1 0 0-6H9z" />
-                                      </svg>
+                                      <SVGIconComponent iconType='M6.9' />
                                       Consultar matriz de aprobación de gestión
                                       del conocimiento
                                     </a>
@@ -4689,17 +4344,8 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                     className="alert alert-danger"
                                     role="alert"
                                   >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="16"
-                                      height="16"
-                                      fill="currentColor"
-                                      className="bi bi-info-circle"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                                      <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
-                                    </svg>{' '}
+                                    <SVGIconComponent iconType='M8' />
+                                    {' '}
                                     Debe diligenciar todos los campos obligatorios
                                     para continuar.
                                   </div>
@@ -4748,7 +4394,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                   </select>
                                 </div>
 
-                                {this.props.match.params.opcion == 2 ? null : (
+                                {this.state.opcion == 2 ? null : (
                                   <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 marginBottom">
                                     <label className="form-label required " >
                                       Descripción:
@@ -4766,7 +4412,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                   </div>
 
                                 )}
-                                {this.props.match.params.opcion == 2 ? null : (
+                                {this.state.opcion == 2 ? null : (
                                   <p id="Contadordescrip">{this.state.CantidadCaracteres}/300</p>
                                 )}
                                 <br />
@@ -4805,17 +4451,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                                     </span>
 
                                     <span className="FAQ">
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="16"
-                                        height="16"
-                                        fill="currentColor"
-                                        className="bi bi-info-circle"
-                                        viewBox="0 0 16 16"
-                                      >
-                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                                        <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
-                                      </svg>
+                                      <SVGIconComponent iconType='M8' />
 
                                       <span className="modalFAQ">
                                         {this.state.faqCompromiso}
@@ -4886,19 +4522,8 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                               }}
                               className="btn-regresar"
                             >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="16"
-                                height="16"
-                                fill="currentColor"
-                                className="bi bi-chevron-left"
-                                viewBox="0 0 16 16"
-                              >
-                                <path
-                                  fill-rule="evenodd"
-                                  d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"
-                                />
-                              </svg>
+                              <SVGIconComponent iconType='M11' />
+
                               Regresar
                             </button>
                           ) : null}
@@ -4947,7 +4572,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                           {/* Boton Enviar */}
                           {this.state.posPaso == this.state.secciones.length - 1 &&
                             !this.state.enviado &&
-                            this.props.match.params.opcion == 1 &&
+                            this.state.opcion == 1 &&
                             this.state.DescripcionMotivo.length > 0 &&
                             this.state.Motivo.length > 0 ? (
                             <button
@@ -4967,7 +4592,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                           {this.state.posPaso ==
                             this.state.secciones.length - 1 &&
                             !this.state.enviado &&
-                            this.props.match.params.opcion == 2 &&
+                            this.state.opcion == 2 &&
                             this.state.Motivo.length > 0 ? (
                             <button
                               name="continuar"
@@ -4984,7 +4609,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                           ) : null}
 
                           {this.state.posPaso == this.state.secciones.length - 1 && !this.state.enviado &&
-                            this.props.match.params.opcion == 3 &&
+                            this.state.opcion == 3 &&
                             this.state.Motivo.length > 0 && this.state.CantidadCaracteres > 0 ? (
                             <button
                               name="continuar"
@@ -5019,4 +4644,14 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
   }
 }
 
-export default withRouter(CrearContenido)
+const mapStateToProps = (state:any) => {
+  return {
+    parametros: state.parametros.parametros,
+    paises: state.paises,
+    userDetail: state.userDetail.userDetail,
+    niveles: state.nivelAprobacion.nivelAprobacion,
+  };
+};
+
+
+export default connect(mapStateToProps)(withRouter(CrearContenido))

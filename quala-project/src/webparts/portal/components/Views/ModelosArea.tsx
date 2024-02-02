@@ -1,8 +1,14 @@
 import * as React from "react";
+import { connect } from 'react-redux';
 import { PNP } from "../Util/util";
-import { Link } from "react-router-dom";
+import { Link,withRouter,RouteComponentProps } from "react-router-dom";
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Grid from '@mui/material/Grid';
+//import Button from '@mui/material/Button';
+import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
 
-export interface IModeloArea {
+export interface IModeloArea extends RouteComponentProps {
     context: any;
     userId: any;
     urlSite: any;
@@ -10,72 +16,107 @@ export interface IModeloArea {
     Direcciones: any;
     Areas: any;
     SubAreas: any;
+    parametros: {ID: any; Llave: string; Valor: string; Descripcion: string; } [];
   }
   
 
-export default class ModelosArea extends React.Component<IModeloArea, any> {
+class ModelosArea extends React.Component<IModeloArea, any> {
     public pnp: PNP;
 
     constructor(props: any) {
-        super(props);        
+        super(props);
+        console.log(props)
+        
+        this.state = {
+            anchorEl: null,
+        };
         
         this.pnp = new PNP(props.context);
     }
 
+    handleMenuItemClick = (url:any) => {     
+        if (url.startsWith("http://") || url.startsWith("https://")) {       
+          window.open(url, "_blank");
+        } else {        
+          this.props.history.push(url);
+        }
+  
+        this.handleClose(); 
+    };
+
+    handleClick = (event:any) => {
+        this.setState({ anchorEl: event.currentTarget });
+    };
+
+    handleClose = () => {
+        this.setState({ anchorEl: null });
+    };
+
+
     public render(): React.ReactElement<IModeloArea> {
-        return (<>
-                Modelos de Área
-                <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="currentColor"
-                className="bi bi-chevron-down"
-                viewBox="0 0 16 16"
+        const { anchorEl } = this.state;
+        const open = Boolean(anchorEl);
+
+        return (<div>
+                <div onMouseOver={this.handleClick}>
+                     
+                {(this.props.parametros.filter((elemento: any) => elemento.Llave === "TituloModelosdearea")[0] ?? {}).Valor}
+                    <ArrowDropDown />             
+                </div>
+
+                <Menu
+                    id="modelos-menu"
+                    anchorEl={anchorEl}
+                    keepMounted
+                    open={open}
+                    onClose={this.handleClose}
+                    PaperProps={{
+                        onMouseLeave: this.handleClose,
+                        style: {
+                            maxHeight: '77vh', // Ajusta según sea necesario
+                            width: '68vw', // Ajusta según sea necesario
+                        },
+                    }}
                 >
-                <path
-                    fill-rule="evenodd"
-                    d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"
-                />
-                </svg>
-                <div className="dropdown-menu navi" style={{ width: "75vw" }}>
-                <div className="row">
-                    {this.props.Direcciones.map((d: any) => (
-                    <div className="nav-item dropdownSubMen col-md-3">
-                        <Link to={"/Visor/" + d.NombreDireccion} className="fw-bold d-block fs-6 text-gray-600 text-hover-primary mt-2">
-                            <div className="ulborder">
-                                <h6 id="mrgh6">
-                                    {d.NombreDireccion}
-                                </h6>
-                            </div>
-                        </Link>
-                        <div className="dropdown-submen" style={{width: "18rem"}}>
-                        {this.props.Areas && this.props.Areas.length > 0 ? this.props.Areas.map((e: any) => d.NombreDireccion === e.Direccion ? (
-                                <li className="nav-item dropdownSubMen"
-                                    style={{listStyle: "none",}} >
-                                    <Link to={"/Visor/" + d.NombreDireccion +  "/" + e.NombreArea} className="fw-bold d-block fs-6 text-gray-600 text-hover-primary mt-2">
-                                         {e.NombreArea}
+                    <Grid container spacing={2}>
+                        {this.props.Direcciones.map((direccion:any, index:any) => (
+                            <Grid item xs={12} sm={6} md={3} key={index} >
+                                <div className="titulo-menu" style={{padding:'10px'}}>
+                                    <Link to={"/Visor/" + direccion.ID} className="fw-bold d-block fs-6 text-gray-600 text-hover-primary mt-2">
+                                        <div className="ulborder">
+                                            <h6 id="mrgh6">
+                                                {direccion.NombreDireccion}
+                                            </h6>
+                                        </div>
                                     </Link>
-                                    <ul className="dropdown-submen">
-                                    {this.props.SubAreas && this.props.SubAreas.length > 0
-                                        ? this.props.SubAreas.map(
-                                            (s:any) => s.Area === e.NombreArea ? (
-                                                <li className="nav-item" style={{listStyle:"none",}}>
-                                                <Link to={"/Visor/" + d.NombreDireccion + "/" + e.NombreArea + "/" + s.NombreSubArea}
-                                                    className="fw-bold d-block fs-6 text-gray-600 text-hover-primary mt-2">
-                                                    {s.NombreSubArea}
-                                                </Link>
-                                                </li>
-                                            ) : null
-                                        ) : null}
-                                    </ul>
-                                </li>) : null)
-                            : null}
-                        </div>
-                    </div>
-                    ))}
-                </div>
-                </div>
-            </>)
+                                    {/* Áreas */}
+                                    {this.props.Areas.filter((area:any) => area.Direccion === direccion.NombreDireccion).map((area:any, areaIndex:any) => (
+                                         <div key={areaIndex}>
+                                            <MenuItem key={areaIndex} onClick={() => this.handleMenuItemClick("/Visor/" + area.ID)}>
+                                                {area.NombreArea}
+                                            </MenuItem>
+                                            {/* SubÁreas */}
+                                            {this.props.SubAreas.filter((subArea:any) => subArea.Area === area.NombreArea).map((subArea:any, subAreaIndex:any) => (                                                
+                                                <MenuItem sx={{ justifyContent: 'center'}} key={subAreaIndex} onClick={() => this.handleMenuItemClick("/Visor/" + subArea.ID)}>
+                                                     {subArea.NombreSubArea}
+                                                </MenuItem>                                                                                                
+                                            ))}
+                                        </div>
+                                        
+                                    ))}
+                                </div>
+                            </Grid>
+                        ))}
+                    </Grid>
+                </Menu>
+            </div>)
     }
 }
+
+const mapStateToProps = (state:any) => {
+    return {
+    parametros: state.parametros.parametros,
+    };
+};
+
+export default  connect(mapStateToProps)(withRouter(ModelosArea));
