@@ -58,7 +58,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
       //{Title: 'Documentos del Mecanismo'},
       { Title: 'Aprobadores' },
       { Title: 'Control de Cambios' },
-      //{Title:'Plan de acci�n de los contenidos'}
+      //{Title:'Plan de accin de los contenidos'}
     ]
 
     this.state = {
@@ -285,7 +285,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
           }
         })
     }
-    if (this.state.TipoSolicitud === "Creación" || this.state.TipoSolicitud === "Actualización") {
+    if (this.state.TipoSolicitud === "Creacin" || this.state.TipoSolicitud === "Actualizacin") {
       this.pnp.getListItems(
         'Mecanismos Local',
         ['*', 'Nombre_x0020_Driver/Id', 'Nombre_x0020_Driver/Nombre_x0020_Driver'],
@@ -374,14 +374,14 @@ class Componentes extends React.Component<IComponentesProps, any>{
     this.setState({ mostrarModal: true })
   }
 
-  // Obtiene una lista de pa�ses de SharePoint y actualiza el estado del componente con los resultados.
+  // Obtiene una lista de pases de SharePoint y actualiza el estado del componente con los resultados.
   public paises() {
     // Usa la biblioteca PnP JS para obtener elementos de lista de la lista de SharePoint 'Paises'.
-    // El segundo par�metro en el m�todo getListItemsRoot especifica qu� columnas recuperar.
-    // Se pasa una cadena vac�a como tercer y cuarto par�metro para recuperar todos los elementos.
+    // El segundo parmetro en el mtodo getListItemsRoot especifica qu columnas recuperar.
+    // Se pasa una cadena vaca como tercer y cuarto parmetro para recuperar todos los elementos.
     this.pnp.getListItemsRoot('Paises', ['Title'], '', '').then((res) =>
-      // Actualiza el estado del componente con la lista de pa�ses recuperada.
-      // El par�metro 'res' contiene una matriz de objetos de elementos de lista, donde cada objeto representa un pa�s.
+      // Actualiza el estado del componente con la lista de pases recuperada.
+      // El parmetro 'res' contiene una matriz de objetos de elementos de lista, donde cada objeto representa un pas.
       this.setState({
         paises: res,
       }),
@@ -392,7 +392,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
   private deleteArchivo(index: any) {
     // Hace una copia de la matriz de archivos actual del estado del componente.
     const archivos = this.state.Archivos;
-    // Elimina el archivo en el �ndice especificado de la matriz.
+    // Elimina el archivo en el ndice especificado de la matriz.
     archivos.splice(index, 1);
 
     // Actualiza el estado del componente con la matriz de archivos modificada.
@@ -406,9 +406,9 @@ class Componentes extends React.Component<IComponentesProps, any>{
     // Crea una copia de la matriz actual de archivos en el estado del componente.
     const Archivos = [...this.state.Archivos];
 
-    // Si se seleccion� al menos un archivo...
+    // Si se seleccion al menos un archivo...
     if (e) {
-      // Itera a trav�s de los archivos seleccionados y los agrega a la matriz de archivos.
+      // Itera a travs de los archivos seleccionados y los agrega a la matriz de archivos.
       for (var i = 0; i < e.target.files.length; i++) {
         let file = e.target.files[i];
         Archivos.push(file);
@@ -448,7 +448,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
     // Se obtiene una copia del arreglo de plantas aplicables del estado actual
     const plantasAplica = [...this.state.plantasAplica];
 
-    // Se elimina la planta en el �ndice especificado del arreglo de plantas aplicables
+    // Se elimina la planta en el ndice especificado del arreglo de plantas aplicables
     if (!this.props.Desabilitado) {
       plantasAplica.splice(index, 1);
     }
@@ -461,7 +461,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
 
   //Funcion que permite consultar el estado de auditoria del mecanismo
   public inputChange(target: any): void {
-    // Obtiene los valores del estado necesarios para la funci�n
+    // Obtiene los valores del estado necesarios para la funcin
     const pasos = this.state.Pasos;
     const posPaso = this.state.posPaso;
     const value = target.value;
@@ -568,13 +568,13 @@ class Componentes extends React.Component<IComponentesProps, any>{
         }
       }
     }
-    // Actualiza el estado con el valor del campo de formulario que cambi� y la direcci�n seleccionada
+    // Actualiza el estado con el valor del campo de formulario que cambi y la direccin seleccionada
     this.setState(
       {
         [name]: value,
         selectedDireccion: target.value,
       },
-      // Llama a la funci�n consultarAreas despu�s de que se actualice el estado
+      // Llama a la funcin consultarAreas despus de que se actualice el estado
       () => {
         this.consultarAreas();
       }
@@ -816,20 +816,20 @@ class Componentes extends React.Component<IComponentesProps, any>{
     })
   }
 
-  // Convierte la primera letra del NombreSubsitio recibido en may�scula y actualiza el estado de la componente con el valor convertido.
+  // Convierte la primera letra del NombreSubsitio recibido en mayscula y actualiza el estado de la componente con el valor convertido.
   private convertirPrimeraLetra() {
     // Verifica si el NombreSubsitio existe
     if (this.props.NombreSubsitio) {
       // Obtiene el valor del NombreSubsitio
       const prueba = this.props.NombreSubsitio;
-      // Convierte la primera letra del valor en may�scula y lo guarda en una variable
+      // Convierte la primera letra del valor en mayscula y lo guarda en una variable
       const prueba2 = prueba[0].toUpperCase() + prueba.substring(1);
       // Actualiza el estado de la componente con el valor convertido
       this.setState(
         {
           NombreConvertido: prueba2,
         },
-        // Ejecuta el m�todo getGroups() de la biblioteca PnP
+        // Ejecuta el mtodo getGroups() de la biblioteca PnP
         () => {
           this.pnp.getGroups();
         },
@@ -1071,7 +1071,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
         if (index == 1 && this.props.match.params.opcion == 2) {
           secciones.push({ Title: 'Documentos del Mecanismo' })
         } else if (index == 1 && this.props.match.params.opcion == 3) {
-          secciones.push({ Title: 'Plan de acci�n de los contenidos' })
+          secciones.push({ Title: 'Plan de accin de los contenidos' })
         }
         secciones.push(item)
       })
@@ -1566,7 +1566,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
     )
   }
 
-  //Funcion que permite a�adir a un array los demas aprobadores del area
+  //Funcion que permite aadir a un array los demas aprobadores del area
   private getPeoplePickerDemasAprobadores(items: any[], index: any) {
     const cDemasAprobadores = [...this.state.cDemasAprobadores]
 
@@ -1605,7 +1605,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
     })
   }
 
-  //Funcion que permite a�adir a un array los aprobadores del area
+  //Funcion que permite aadir a un array los aprobadores del area
   private _getPeoplePickerG(items: any[], index: any) {
     const cAprobadoresArea = [...this.state.cAprobadoresArea]
     cAprobadoresArea[index]['AprobadoresArea'] = items[0].id
@@ -1632,7 +1632,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
     })
   }
 
-  //Funcion que permite a�adir a un array los aprobadores 
+  //Funcion que permite aadir a un array los aprobadores 
   private _getPeoplePicker(items: any[], objeto: any) {
     this.setState({
       [objeto]: items[0].id,
@@ -1729,8 +1729,8 @@ class Componentes extends React.Component<IComponentesProps, any>{
     this.ConsultarTituloCancelarsolicitud();
     this.ConsultarTextoCancelarsolicitud();
     this.ConsultarTextoComentarios();
-    this.ConsultarTituloActivarAprobación();
-    this.ConsultarTextoActivarAprobación();
+    this.ConsultarTituloActivarAprobacin();
+    this.ConsultarTextoActivarAprobacin();
     
 
     switch(this.props.accion){
@@ -2159,7 +2159,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
         // Actualiza el estado con el valor obtenido
         this.setState({ TituloResponderAjustes: items[0].Valor });
       } else {
-        console.log("No se encontró la llave buscada.");
+        console.log("No se encontr la llave buscada.");
         this.setState({ TituloResponderAjustes: '' }); // O puedes establecer un valor por defecto
       }
     }).catch((error) => {
@@ -2185,7 +2185,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
           // Actualiza el estado con el valor obtenido
           this.setState({ TextoResponderAjustes: items[0].Valor });
         } else {
-          console.log("No se encontró la llave buscada.");
+          console.log("No se encontr la llave buscada.");
           this.setState({ TextoResponderAjustes: '' }); // O puedes establecer un valor por defecto
         }
       }).catch((error) => {
@@ -2211,7 +2211,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
           // Actualiza el estado con el valor obtenido
           this.setState({ TextoComentariosRevisor: items[0].Valor });
         } else {
-          console.log("No se encontró la llave buscada.");
+          console.log("No se encontr la llave buscada.");
           this.setState({ TextoComentariosRevisor: '' }); // O puedes establecer un valor por defecto
         }
       }).catch((error) => {
@@ -2237,7 +2237,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
           // Actualiza el estado con el valor obtenido
           this.setState({ TituloEnviarAjustes: items[0].Valor });
         } else {
-          console.log("No se encontró la llave buscada.");
+          console.log("No se encontr la llave buscada.");
           this.setState({ TituloEnviarAjustes: '' }); // O puedes establecer un valor por defecto
         }
       }).catch((error) => {
@@ -2263,7 +2263,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
         // Actualiza el estado con el valor obtenido
         this.setState({ TextoEnviarAjustes: items[0].Valor });
       } else {
-        console.log("No se encontró la llave buscada.");
+        console.log("No se encontr la llave buscada.");
         this.setState({ TextoEnviarAjustes: '' }); // O puedes establecer un valor por defecto
       }
     }).catch((error) => {
@@ -2289,7 +2289,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
           // Actualiza el estado con el valor obtenido
           this.setState({ TextoObservaciones: items[0].Valor });
         } else {
-          console.log("No se encontró la llave buscada.");
+          console.log("No se encontr la llave buscada.");
           this.setState({ TextoObservaciones: '' }); // O puedes establecer un valor por defecto
         }
       }).catch((error) => {
@@ -2315,7 +2315,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
           // Actualiza el estado con el valor obtenido
           this.setState({ TituloEnviarAPublicacion: items[0].Valor });
         } else {
-          console.log("No se encontró la llave buscada.");
+          console.log("No se encontr la llave buscada.");
           this.setState({ TituloEnviarAPublicacion: '' }); // O puedes establecer un valor por defecto
         }
       }).catch((error) => {
@@ -2341,7 +2341,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
           // Actualiza el estado con el valor obtenido
           this.setState({ TextoEnviarAPublicacionCreacion1: items[0].Valor });
         } else {
-          console.log("No se encontró la llave buscada.");
+          console.log("No se encontr la llave buscada.");
           this.setState({ TextoEnviarAPublicacionCreacion1: '' }); // O puedes establecer un valor por defecto
         }
       }).catch((error) => {
@@ -2367,7 +2367,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
           // Actualiza el estado con el valor obtenido
           this.setState({ TextoEnviarAPublicacionCreacion2: items[0].Valor });
         } else {
-          console.log("No se encontró la llave buscada.");
+          console.log("No se encontr la llave buscada.");
           this.setState({ TextoEnviarAPublicacionCreacion2: '' }); // O puedes establecer un valor por defecto
         }
       }).catch((error) => {
@@ -2393,7 +2393,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
           // Actualiza el estado con el valor obtenido
           this.setState({ TituloCancelarsolicitud: items[0].Valor });
         } else {
-          console.log("No se encontró la llave buscada.");
+          console.log("No se encontr la llave buscada.");
           this.setState({ TituloCancelarsolicitud: '' }); // O puedes establecer un valor por defecto
         }
       }).catch((error) => {
@@ -2419,7 +2419,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
           // Actualiza el estado con el valor obtenido
           this.setState({ TextoCancelarsolicitud: items[0].Valor });
         } else {
-          console.log("No se encontró la llave buscada.");
+          console.log("No se encontr la llave buscada.");
           this.setState({ TextoCancelarsolicitud: '' }); // O puedes establecer un valor por defecto
         }
       }).catch((error) => {
@@ -2445,7 +2445,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
           // Actualiza el estado con el valor obtenido
           this.setState({ TextoComentarios: items[0].Valor });
         } else {
-          console.log("No se encontró la llave buscada.");
+          console.log("No se encontr la llave buscada.");
           this.setState({ TextoComentarios: '' }); // O puedes establecer un valor por defecto
         }
       }).catch((error) => {
@@ -2456,12 +2456,12 @@ class Componentes extends React.Component<IComponentesProps, any>{
   }  
   
   // Funcion para consultar el titulo "Titulo Activar aprobacion" en parametros tecnicos
-  private ConsultarTituloActivarAprobación(){
+  private ConsultarTituloActivarAprobacin(){
 
     this.pnp.getListItemsRoot(
         "Parametros Tecnicos",
         ["*"],
-        "Llave eq 'TituloActivarAprobación '",
+        "Llave eq 'TituloActivarAprobacin '",
         ""
       ).then((items) => {
         console.log(items);
@@ -2469,25 +2469,25 @@ class Componentes extends React.Component<IComponentesProps, any>{
         
         if (items.length > 0) {
           // Actualiza el estado con el valor obtenido
-          this.setState({ TituloActivarAprobación: items[0].Valor });
+          this.setState({ TituloActivarAprobacin: items[0].Valor });
         } else {
-          console.log("No se encontró la llave buscada.");
-          this.setState({ TituloActivarAprobación: '' }); // O puedes establecer un valor por defecto
+          console.log("No se encontr la llave buscada.");
+          this.setState({ TituloActivarAprobacin: '' }); // O puedes establecer un valor por defecto
         }
       }).catch((error) => {
         console.error("Error al consultar la lista:", error);
-        this.setState({ TituloActivarAprobación: '' }); // Manejo del estado en caso de error
+        this.setState({ TituloActivarAprobacin: '' }); // Manejo del estado en caso de error
       });      
     
   }
   
   // Funcion para consultar el titulo "Texto Activar aprobacion" en parametros tecnicos
-  private ConsultarTextoActivarAprobación(){
+  private ConsultarTextoActivarAprobacin(){
 
     this.pnp.getListItemsRoot(
         "Parametros Tecnicos",
         ["*"],
-        "Llave eq 'TextoActivarAprobación '",
+        "Llave eq 'TextoActivarAprobacin '",
         ""
       ).then((items) => {
         console.log(items);
@@ -2495,14 +2495,14 @@ class Componentes extends React.Component<IComponentesProps, any>{
         
         if (items.length > 0) {
           // Actualiza el estado con el valor obtenido
-          this.setState({ TextoActivarAprobación: items[0].Valor });
+          this.setState({ TextoActivarAprobacin: items[0].Valor });
         } else {
-          console.log("No se encontró la llave buscada.");
-          this.setState({ TextoActivarAprobación: '' }); // O puedes establecer un valor por defecto
+          console.log("No se encontr la llave buscada.");
+          this.setState({ TextoActivarAprobacin: '' }); // O puedes establecer un valor por defecto
         }
       }).catch((error) => {
         console.error("Error al consultar la lista:", error);
-        this.setState({ TextoActivarAprobación: '' }); // Manejo del estado en caso de error
+        this.setState({ TextoActivarAprobacin: '' }); // Manejo del estado en caso de error
       });      
     
   }
@@ -2567,7 +2567,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
 
                         <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                           <label className="form-label required">
-                            País
+                            Pas
                           </label>
                           <input  
                             style={{ height: '56%' }}
@@ -2583,7 +2583,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
 
                         <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                           <label className="form-label required">
-                            Dirección
+                            Direccin
                           </label>
                                             
                           <select
@@ -2614,7 +2614,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
 
                         <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                           <label className="form-label required">
-                            Área
+                            Area
                           </label>
 
                           <select
@@ -2647,7 +2647,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                         
                           <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                             <label className="form-label">
-                              Sub Área (opcional)
+                              Sub Area (opcional)
                             </label>
                             
                         {this.state.SubArea &&
@@ -2892,7 +2892,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
 
                         
                         <div className='row mt-2'>
-                          <h3>Información del mecanismo a publicar</h3>
+                          <h3>Informacin del mecanismo a publicar</h3>
                           <div className="col-6">
                             <label className="form-label required">
                               Nombre del Mecanismo
@@ -3012,7 +3012,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                               className="form-check-label pe-10"
                               htmlFor="flexRadioDefault"
                             >
-                              Público
+                              Pblico
                             </label>
                             <span className="form-check">
                               <input placeholder='.'
@@ -3121,7 +3121,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                             )}
 
                             <span className="form-check-label mx-15">
-                              Requiere revisión de auditoría
+                              Requiere revisin de auditora
                             </span>
                           </label>
                         </div>
@@ -3160,7 +3160,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                               className="form-check-label"
                               id="fcl1"
                             >
-                              Aplica a planta de producción
+                              Aplica a planta de produccin
                             </span>
 
                             <span className="FAQ">
@@ -3385,7 +3385,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                                 className="form-check-label pe-10 fs-5"
                                 htmlFor="flexRadioDefault"
                               >
-                                Selecciona esta opción si vas a adjuntar una URL
+                                Selecciona esta opcin si vas a adjuntar una URL
                               </label>
                               <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12">
                                 {this.state.AdjuntarUrl == true ? (
@@ -3445,7 +3445,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                               className="form-check-label pe-10 fs-5"
                               htmlFor="flexRadioDefault"
                             >
-                              Selecciona esta opción si vas a adjuntar
+                              Selecciona esta opcin si vas a adjuntar
                               una URL
                             </label>
                             <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12">
@@ -3547,12 +3547,12 @@ class Componentes extends React.Component<IComponentesProps, any>{
                           </span>
                           <div className="d-flex flex-column">
                             <span>
-                              Con esta solicitud usted está
+                              Con esta solicitud usted est
                               solicitando eliminar la totalidad de
                               documentos que componen el mecanismo.
-                              Para eliminar sólo uno o algunos de los
+                              Para eliminar slo uno o algunos de los
                               anexos del mecanismo cancele esta
-                              solicitud y solicite una actualización
+                              solicitud y solicite una actualizacin
                               del mecanismo
                             </span>
                           </div>
@@ -3563,12 +3563,12 @@ class Componentes extends React.Component<IComponentesProps, any>{
                 ) : null}
 
                 {this.state.Pasos ==
-                  'Plan de acción de los contenidos' ? (
+                  'Plan de accin de los contenidos' ? (
                   <div className="flex-column current">
                     <div className="row mb-5">
                       <div className="card-title flex-column header-title-stepper rounded-top p-4 mb-5">
                         <h3 className="text-primary">
-                          Plan de acción de los contenidos
+                          Plan de accin de los contenidos
                         </h3>
                       </div>
                     </div>
@@ -3598,7 +3598,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                       </label>
 
                       <small className="text-gray-600 fs-7">
-                        Indique a continuación el plan de acción a
+                        Indique a continuacin el plan de accin a
                         ejecutar para cada documento del mecanismo
                       </small>
                       <br />
@@ -3697,7 +3697,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
 
                           <span>
                             Esta solicitud aplica un formulario de
-                            eliminación, más no de actualización.
+                            eliminacin, ms no de actualizacin.
                           </span>
                         </div>
                       ) : null}
@@ -3713,7 +3713,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                         </div>
                       </div>
                       <div>
-                        <h4 className="mg-a">Aprobadores del área</h4>
+                        <h4 className="mg-a">Aprobadores del rea</h4>
                       </div>
                       <div className="row mb-5 contenform">
                         <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6">
@@ -3806,13 +3806,13 @@ class Componentes extends React.Component<IComponentesProps, any>{
                       </div>
                       <div>
                         <h4 className="mg-a">
-                          Aprobadores de áreas involucradas
+                          Aprobadores de reas involucradas
                         </h4>
                       </div>
                       <div className="row mb-5 contenform">
                         <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 mt-6">
                           <small className="text-gray-600 fs-7">
-                            Seleccione las áreas que tienen
+                            Seleccione las reas que tienen
                             responsabilidad en el documento
                           </small>
                           <br />
@@ -3837,7 +3837,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                             (e: any, index: any) => (
                               <div className="row">
                                 <div className="col-lg-4 col-md-4 col-xl-4 marginBottom">
-                                  <label>Direcci�n {index + 1} </label>
+                                  <label>Direccin {index + 1} </label>
                                   <select
                                     disabled={this.props.Desabilitado}
                                     onChange={(event) =>
@@ -3868,7 +3868,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                                   this.state['AreasDireccion' + index]
                                     .length > 0 ? (
                                   <div className="col-lg-4 col-md-4 col-xl-4 marginBottom">
-                                    <label>�rea {index + 1} </label>
+                                    <label>rea {index + 1} </label>
                                     <select
                                       onChange={(eventA) =>
                                         this.getAprobadoresArea(
@@ -4011,7 +4011,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
 
                         {this.state.cAprobadores && this.state.cAprobadores.length > 0
                           ? this.state.cAprobadores.map((p: any, i: any) =>
-                            p.Cargo !== 'Auditor' && p.Cargo !== 'Líder GDC' ? (
+                            p.Cargo !== 'Auditor' && p.Cargo !== 'Lder GDC' ? (
                               <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                                 <label className="form-label">
                                   {p.Cargo}
@@ -4184,7 +4184,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                               <path d="M6.354 5.5H4a3 3 0 0 0 0 6h3a3 3 0 0 0 2.83-4H9c-.086 0-.17.01-.25.031A2 2 0 0 1 7 10.5H4a2 2 0 1 1 0-4h1.535c.218-.376.495-.714.82-1z" />
                               <path d="M9 5.5a3 3 0 0 0-2.83 4h1.098A2 2 0 0 1 9 6.5h3a2 2 0 1 1 0 4h-1.535a4.02 4.02 0 0 1-.82 1H12a3 3 0 1 0 0-6H9z" />
                             </svg>
-                            Consultar matriz de aprobación de gestión
+                            Consultar matriz de aprobacin de gestin
                             del conocimiento
                           </a>
                         </div>
@@ -4258,7 +4258,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                       {this.props.match.params.opcion == 2 ? null : (
                         <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 marginBottom">
                           <label className="form-label required " >
-                            Descripción:
+                            Descripcin:
                           </label>
 
                           <textarea
@@ -4266,7 +4266,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                             onChange={(e) => { this.longitudcadena(e.target.value), this.setState({ DescripcionMotivo: e.target.value }) }}
                             className="form-control"
                             name="input2"
-                            placeholder="Ingrese la Descripción"
+                            placeholder="Ingrese la Descripcin"
                             maxLength={300}
                             disabled={this.props.Desabilitado}
                           ></textarea>
@@ -4341,7 +4341,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                     <div className="row mb-5">
                       <div className="card-title flex-column p-4 mb-5">
                         <h2 className="text-primary fs-1">
-                          Solicitud enviada con éxito.
+                          Solicitud enviada con xito.
                         </h2>
                       </div>
                       <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12">
@@ -4544,7 +4544,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                       className= "textarea1" 
                       name="Envarajustes" 
                       id=""
-                      placeholder='ingrese sus comentarios aquí'
+                      placeholder='ingrese sus comentarios aqu'
                       >
                         
 
@@ -4617,7 +4617,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                       className= "textarea1" 
                       name="Envarajustes" 
                       id=""
-                      placeholder='ingrese sus comentarios aquí'
+                      placeholder='ingrese sus comentarios aqu'
                       >
                         
 
@@ -4679,7 +4679,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                           className= "textarea1" 
                           name="Envarajustes" 
                           id=""
-                          placeholder='ingrese sus comentarios aquí'
+                          placeholder='ingrese sus comentarios aqu'
                           >
                             
                         </textarea>
@@ -4791,7 +4791,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                             className= "textarea1" 
                             name="Envarajustes" 
                             id=""
-                            placeholder='ingrese sus comentarios aquí'
+                            placeholder='ingrese sus comentarios aqu'
                             >
                               
                           </textarea>                          
@@ -4819,7 +4819,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                                 }}
                                 type="button"
                                 className="btn btn-primary"
-                              ><span className="indicator-label"> Enviar a publicación</span>
+                              ><span className="indicator-label"> Enviar a publicacin</span>
                                 <span className="indicator-progress">
                                   Please wait...
                                   <span className="spinner-border spinner-border-sm align-middle ms-2"></span>
@@ -4842,7 +4842,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                       <div className="row mb-5">
                         <div className="card-title flex-column header-title-stepper rounded-top p-4 mb-5">
                           <h3 className="text-primary">
-                            {this.state.TituloActivarAprobación}
+                            {this.state.TituloActivarAprobacin}
                           </h3>
                         </div>
                       </div>    
@@ -4857,7 +4857,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                             })
                           }/>
                           <label className="form-label" style={{ marginLeft: "7px" }}>
-                          {this.state.TextoActivarAprobación}
+                          {this.state.TextoActivarAprobacin}
                           </label> 
 
                           <div className='d-flex flex-stack Componentesajustes'>
@@ -4889,7 +4889,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                               Aprobar solicitud
                             </h3>
                           </div>
-                          <p className='ptextajustes'>Con esta aprobación usted confirma que revisó y está de acuerdo con el contenido de los documentos</p>
+                          <p className='ptextajustes'>Con esta aprobacin usted confirma que revis y est de acuerdo con el contenido de los documentos</p>
                         </div>
     
                         <div className="row mb-5 contenformajustes">
@@ -4902,7 +4902,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                               className= "textarea1" 
                               name="Envarajustes" 
                               id=""
-                              placeholder='ingrese sus comentarios aquí'
+                              placeholder='ingrese sus comentarios aqu'
                               >
                                 
                             </textarea>                            
@@ -4935,7 +4935,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                               Rechazar solicitud
                             </h3>
                           </div>
-                          <p className='ptextajustes'>Al rechazar esta solicitud se finaliza por completo el proceso de prublicaci�n. En caso de querer retomar la solicitud, el ususario solicitante deber� iniciarla nuevamente.</p>
+                          <p className='ptextajustes'>Al rechazar esta solicitud se finaliza por completo el proceso de prublicacin. En caso de querer retomar la solicitud, el ususario solicitante deber iniciarla nuevamente.</p>
                         </div>
     
                         <div className="row mb-5 contenformajustes">
@@ -4948,7 +4948,7 @@ class Componentes extends React.Component<IComponentesProps, any>{
                               className= "textarea1" 
                               name="Envarajustes" 
                               id=""
-                              placeholder='ingrese sus comentarios aquí'
+                              placeholder='ingrese sus comentarios aqu'
                               >
                                 
                             </textarea>

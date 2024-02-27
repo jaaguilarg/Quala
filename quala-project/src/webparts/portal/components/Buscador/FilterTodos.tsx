@@ -87,7 +87,7 @@ export default class FilterTodos extends React.Component<IFilterTodosProps, any>
                                 ))}</>) : null}
                             
                             <Button onClick={toggleDiv}>
-                                {this.state.showDiv ? "Ver Menos" : "Ver más"}
+                                {this.state.showDiv ? "Ver Menos" : "Ver ms"}
                             </Button>
 
                         </>) : null}

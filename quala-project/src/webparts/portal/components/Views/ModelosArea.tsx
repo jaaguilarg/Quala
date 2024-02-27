@@ -73,8 +73,8 @@ class ModelosArea extends React.Component<IModeloArea, any> {
                     PaperProps={{
                         onMouseLeave: this.handleClose,
                         style: {
-                            maxHeight: '77vh', // Ajusta según sea necesario
-                            width: '68vw', // Ajusta según sea necesario
+                            maxHeight: '77vh', // Ajusta segn sea necesario
+                            width: '68vw', // Ajusta segn sea necesario
                         },
                     }}
                 >
@@ -89,13 +89,13 @@ class ModelosArea extends React.Component<IModeloArea, any> {
                                             </h6>
                                         </div>
                                     </Link>
-                                    {/* Áreas */}
+                                    {/* reas */}
                                     {this.props.Areas.filter((area:any) => area.Direccion === direccion.NombreDireccion).map((area:any, areaIndex:any) => (
                                          <div key={areaIndex}>
                                             <MenuItem key={areaIndex} onClick={() => this.handleMenuItemClick("/Visor/" + area.ID)}>
                                                 {area.NombreArea}
                                             </MenuItem>
-                                            {/* SubÁreas */}
+                                            {/* Subreas */}
                                             {this.props.SubAreas.filter((subArea:any) => subArea.Area === area.NombreArea).map((subArea:any, subAreaIndex:any) => (                                                
                                                 <MenuItem sx={{ justifyContent: 'center'}} key={subAreaIndex} onClick={() => this.handleMenuItemClick("/Visor/" + subArea.ID)}>
                                                      {subArea.NombreSubArea}

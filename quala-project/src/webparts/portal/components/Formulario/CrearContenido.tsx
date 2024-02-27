@@ -61,14 +61,14 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
       RevisorId: "Revisor",
       PublicadorId: "Publicador",
       Aprobador_x0020_RevisaId: "Aprobador Revisa",
-      Gerente_x0020_de_x0020_AreaId: "Gerente de Área",
+      Gerente_x0020_de_x0020_AreaId: "Gerente de rea",
       AuditorId: "Auditor",
       Jefe_x0020_o_x0020_Gerente_x0020Id: "Jefe o Gerente",
       DirectorGHId: "Director GH",
-      Director_x0020_areaId: "Director de Área",
+      Director_x0020_areaId: "Director de rea",
       Director_x0020_GeneralId: "Director General",
       Presidente_x0020_EjecutivoId: "Presidente Ejecutivo",
-      Lider_x0020_de_x0020_modelo_x002Id: "Líder de Modelo",        
+      Lider_x0020_de_x0020_modelo_x002Id: "Lder de Modelo",        
   };
 
 
@@ -349,7 +349,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
         if (index == 1 && this.state.opcion == 2) {
           secciones.push({ Title: 'Documentos del Mecanismo' })
         } else if (index == 1 && this.state.opcion == 3) {
-          secciones.push({ Title: 'Plan de acción de los contenidos' })
+          secciones.push({ Title: 'Plan de accin de los contenidos' })
         }
         secciones.push(item)
       })
@@ -849,7 +849,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                 data,
               )
               .then((res) => {
-                this.updateMotivos('Actualización')
+                this.updateMotivos('Actualizacin')
               })
           }
           else {
@@ -866,7 +866,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
                 data,
               )
               .then((res) => {                
-                this.updateMotivos('Actualización')
+                this.updateMotivos('Actualizacin')
               })
           }
         })
@@ -976,7 +976,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
         ElaboraId: this.state.PersonaElabora,
         RevisaId: this.state.PersonaRevisa,
         ApruebaId: this.state.PersonaAprueba,
-        EstadoSolicitud: 'En revisión',
+        EstadoSolicitud: 'En revisin',
         DIreccion: this.state.direccion,
         Area: this.state.area,
         Pilar: pilar,
@@ -986,7 +986,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
         SeccionMecanismo: this.state.descripcionMecanismo,
         SubArea: this.state.subArea,
         // Url: this.state.Url,
-        TipoSolicitud: 'Creación',
+        TipoSolicitud: 'Creacin',
         FechaInicio: new Date(this.state.DiaActual).toISOString(),
         FechaFin: new Date(this.state.FechaFinal).toISOString(),
       }
@@ -1015,7 +1015,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
         ElaboraId: this.state.PersonaElabora,
         RevisaId: this.state.PersonaRevisa,
         ApruebaId: this.state.PersonaAprueba,
-        EstadoSolicitud: 'En revisión',
+        EstadoSolicitud: 'En revisin',
         DIreccion: this.state.direccion,
         Area: this.state.area,
         Pilar: pilar,
@@ -1023,7 +1023,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
         IdPilar:this.state.pilar,
         SubArea: this.state.subArea,
         // Url: this.state.Url,
-        TipoSolicitud: 'Creación',
+        TipoSolicitud: 'Creacin',
         FechaInicio: new Date(this.state.DiaActual).toISOString(),
         FechaFin: new Date(this.state.FechaFinal).toISOString(),
       }
@@ -1061,7 +1061,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
          ID_Mecanismo: this.state.idMecanismo,
         // SubArea: this.state.subArea,
         // Url: this.state.Url,
-         TipoSolicitud: 'Creación',
+         TipoSolicitud: 'Creacin',
          FechaInicio: new Date(this.state.DiaActual).toISOString(),
          FechaFin: new Date(this.state.FechaFinal).toISOString(),
       }
@@ -1094,7 +1094,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
         IdPilar:this.state.pilar,
         ID_Mecanismo: this.state.idMecanismo,
         // Url: this.state.Url,
-        TipoSolicitud: 'Creación',
+        TipoSolicitud: 'Creacin',
         FechaInicio: new Date(this.state.DiaActual).toISOString(),
         FechaFin: new Date(this.state.FechaFinal).toISOString(),
       }
@@ -1662,7 +1662,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
           posPaso: posPaso + 1,
           falta: false,
         })
-      } else if (pasos == 'Plan de acción de los contenidos') {
+      } else if (pasos == 'Plan de accin de los contenidos') {
         var all = true
         var allDelete = 0
 
@@ -1909,7 +1909,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
     this.props.history.push('/');
   }
 
-  //Función que permite consultar los mecanismos según el driver seleccionado
+  //Funcin que permite consultar los mecanismos segn el driver seleccionado
   consultarMecanismoDriver(IdDriver:any) {
     var dataMecanismo = this.state.dataMecanismo
 
@@ -2149,7 +2149,7 @@ class CrearContenido extends React.Component<ICrearContenidoProps, any> {
 
 
 
-// Consulta los usuarios que aprueban por dirección y área
+// Consulta los usuarios que aprueban por direccin y rea
 public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) {
 
   const ViewXml = `
@@ -2369,11 +2369,11 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
               >
                 <div className="page-title d-flex flex-column me-3">
                   {this.state.opcion == 1 ? (
-                    <h1 id="contentn" className="d-flex text-dark fw-bolder my-1 fs-2"> Creación de Contenido </h1>
+                    <h1 id="contentn" className="d-flex text-dark fw-bolder my-1 fs-2"> Creacin de Contenido </h1>
                   ) : null}
                   {this.state.opcion == 2 ? (
                     <h1 id="contentn" className="d-flex text-dark fw-bolder my-1 fs-2">
-                      Eliminación de Contenido
+                      Eliminacin de Contenido
                     </h1>
                   ) : null}
 
@@ -2382,7 +2382,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                       id="contentn"
                       className="d-flex text-dark fw-bolder my-1 fs-2"
                     >
-                      Actualización de Contenido
+                      Actualizacin de Contenido
                     </h1>
                   ) : null}
 
@@ -2444,7 +2444,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                 <div className="row mb-5 contenform">                                  
                                     <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                                       <label className="form-label required">
-                                        País
+                                        Pas
                                       </label>
                                       <input 
                                         style={{ height: '56%' }}
@@ -2459,7 +2459,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
 
                                   <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                                     <label className="form-label required">
-                                      Dirección
+                                      Direccin
                                     </label>
 
                                     {this.state.direcciones && this.state.direcciones.length > 0 || this.props.match.params.Acceso == 2 ? (
@@ -2487,7 +2487,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
 
                                   {this.state.areas && this.state.areas.length > 0 || this.props.match.params.Acceso == 2 ? (
                                     <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
-                                      <label className="form-label required">Área</label>
+                                      <label className="form-label required">rea</label>
 
                                       <select
                                         name="area"
@@ -2514,7 +2514,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                     this.state.subAreas.length > 0 ? (
                                     <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                                       <label className="form-label">
-                                        Sub Área (opcional)
+                                        Sub rea (opcional)
                                       </label>
 
                                       <select
@@ -3196,9 +3196,9 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                             className="form-check-input"
                                             type="radio"
                                             name="seguridad"
-                                            value="Público"
+                                            value="Pblico"
                                             checked={
-                                              this.state.seguridad === 'Público'
+                                              this.state.seguridad === 'Pblico'
                                             }
                                             onChange={(e) => {
                                               this.setState({
@@ -3213,7 +3213,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                           className="form-check-label pe-10"
                                           htmlFor="flexRadioDefault"
                                         >
-                                          Público
+                                          Pblico
                                         </label>
                                         <span className="form-check">
                                           <input
@@ -3280,9 +3280,9 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                             className="form-check-input"
                                             type="radio"
                                             name="seguridad"
-                                            value="Público"
+                                            value="Pblico"
                                             checked={
-                                              this.state.seguridad === 'Público'
+                                              this.state.seguridad === 'Pblico'
                                             }
                                             onChange={(e) => {
                                               this.setState({
@@ -3297,7 +3297,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                           className="form-check-label pe-10"
                                           htmlFor="flexRadioDefault"
                                         >
-                                          Público
+                                          Pblico
                                         </label>
                                         <span className="form-check">
                                           <input
@@ -3420,7 +3420,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                       )}
 
                                       <span className="form-check-label mx-15">
-                                        Requiere revisión de auditoría
+                                        Requiere revisin de auditora
                                       </span>
                                     </label>
                                   </div>
@@ -3458,7 +3458,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                         className="form-check-label"
                                         id="fcl1"
                                       >
-                                        Aplica a planta de producción
+                                        Aplica a planta de produccin
                                       </span>
 
                                       <span className="FAQ">
@@ -3622,7 +3622,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                           className="form-check-label pe-10 fs-5"
                                           htmlFor="flexRadioDefault"
                                         >
-                                          Selecciona esta opción si vas a adjuntar
+                                          Selecciona esta opcin si vas a adjuntar
                                           una URL
                                         </label>
                                         <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12">
@@ -3687,7 +3687,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                           className="form-check-label pe-10 fs-5"
                                           htmlFor="flexRadioDefault"
                                         >
-                                          Selecciona esta opción si vas a adjuntar
+                                          Selecciona esta opcin si vas a adjuntar
                                           una URL
                                         </label>
                                         <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12">
@@ -3771,12 +3771,12 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                     </span>
                                     <div className="d-flex flex-column">
                                       <span>
-                                        Con esta solicitud usted está
+                                        Con esta solicitud usted est
                                         solicitando eliminar la totalidad de
                                         documentos que componen el mecanismo.
-                                        Para eliminar sólo uno o algunos de los
+                                        Para eliminar slo uno o algunos de los
                                         anexos del mecanismo cancele esta
-                                        solicitud y solicite una actualización
+                                        solicitud y solicite una actualizacin
                                         del mecanismo
                                       </span>
                                     </div>
@@ -3787,12 +3787,12 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                           ) : null}
 
                           {this.state.Pasos ==
-                            'Plan de acción de los contenidos' ? (
+                            'Plan de accin de los contenidos' ? (
                             <div className="flex-column current">
                               <div className="row mb-5">
                                 <div className="card-title flex-column header-title-stepper rounded-top p-4 mb-5">
                                   <h3 className="text-primary">
-                                    Plan de acción de los contenidos
+                                    Plan de accin de los contenidos
                                   </h3>
                                 </div>
                               </div>
@@ -3812,7 +3812,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                 </label>
 
                                 <small className="text-gray-600 fs-7">
-                                  Indique a continuación el plan de acción a
+                                  Indique a continuacin el plan de accin a
                                   ejecutar para cada documento del mecanismo
                                 </small>
                                 <br />
@@ -3899,7 +3899,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
 
                                     <span>
                                       Esta solicitud aplica un formulario de
-                                      eliminación, más no de actualización.
+                                      eliminacin, ms no de actualizacin.
                                     </span>
                                   </div>
                                 ) : null}
@@ -3915,7 +3915,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                   </div>
                                 </div>
                                 <div>
-                                  <h4 className="mg-a">Aprobadores del área</h4>
+                                  <h4 className="mg-a">Aprobadores del rea</h4>
                                 </div>
                                 <div className="row mb-5 contenform">
                                   <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6">
@@ -4007,13 +4007,13 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                 </div>
                                 <div>
                                   <h4 className="mg-a">
-                                    Aprobadores de áreas involucradas
+                                    Aprobadores de reas involucradas
                                   </h4>
                                 </div>
                                 <div className="row mb-5 contenform">
                                   <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 mt-6">
                                     <small className="text-gray-600 fs-7">
-                                      Seleccione las áreas que tienen
+                                      Seleccione las reas que tienen
                                       responsabilidad en el documento
                                     </small>
                                     <br />
@@ -4037,7 +4037,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                       (e:any, index:any) => (
                                         <div className="row">
                                           <div className="col-lg-4 col-md-4 col-xl-4 marginBottom">
-                                            <label>Dirección {index + 1} </label>
+                                            <label>Direccin {index + 1} </label>
                                             <select
                                               onChange={(event) =>
                                                 this.getAprobadoresPorArea(
@@ -4067,7 +4067,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                             this.state['AreasDireccion' + index]
                                               .length > 0 ? (
                                             <div className="col-lg-4 col-md-4 col-xl-4 marginBottom">
-                                              <label>área {index + 1} </label>
+                                              <label>rea {index + 1} </label>
                                               <select
                                                 onChange={(eventA) =>
                                                   this.getAprobadoresArea(
@@ -4195,7 +4195,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
 
                                   {this.state.cAprobadores && this.state.cAprobadores.length > 0
                                     ? this.state.cAprobadores.map((p:any, i:any) =>
-                                      p.Cargo !== 'Auditor' && p.Cargo !== 'Líder GDC' ? (
+                                      p.Cargo !== 'Auditor' && p.Cargo !== 'Lder GDC' ? (
                                         <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                                           <label className="form-label">
                                             {p.Cargo}
@@ -4333,7 +4333,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                     >
                                       <i className="fas fa-link text-primary"></i>
                                       <SVGIconComponent iconType='M6.9' />
-                                      Consultar matriz de aprobación de gestión
+                                      Consultar matriz de aprobacin de gestin
                                       del conocimiento
                                     </a>
                                   </div>
@@ -4397,7 +4397,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                 {this.state.opcion == 2 ? null : (
                                   <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 marginBottom">
                                     <label className="form-label required " >
-                                      Descripción:
+                                      Descripcin:
                                     </label>
 
                                     <textarea
@@ -4406,7 +4406,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                       onChange={(e) => { this.longitudcadena(e.target.value), this.setState({ DescripcionMotivo: e.target.value }) }}
                                       className="form-control"
                                       name="input2"
-                                      placeholder="Ingrese la Descripción"
+                                      placeholder="Ingrese la Descripcin"
                                       maxLength={300}
                                     ></textarea>
                                   </div>
@@ -4470,7 +4470,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                 <div className="row mb-5">
                                   <div className="card-title flex-column p-4 mb-5">
                                     <h2 className="text-primary fs-1">
-                                      Solicitud enviada con éxito.
+                                      Solicitud enviada con xito.
                                     </h2>
                                   </div>
                                   <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12">
@@ -4493,7 +4493,7 @@ public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) 
                                       href={this.state.linkFinal}
                                       target="_blank"
                                     >
-                                      está página.
+                                      est pgina.
                                     </a>
                                   </h3>
                                   <small className="text-gray-600 fs-5">

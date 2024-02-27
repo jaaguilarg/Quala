@@ -580,7 +580,7 @@ class Pilares extends React.Component<IPilaresProps, any> {
         }
       }
       else {
-        alert("La ficha no contiene información");
+        alert("La ficha no contiene informacin");
       }
 
     } catch (error) {

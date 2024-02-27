@@ -95,7 +95,7 @@ class Home extends React.Component<IHomeProps, any> {
                               {this.state.Areas && this.state.Areas.length > 0 
                                 ? this.state.Areas.map((e: any) => {
                                     if(d.NombreDireccion2 === e.Direccion) {
-                                      // Verificar si el área tiene subáreas
+                                      // Verificar si el rea tiene subreas
                                       
                                       return (
                                         <div key={e.ID}>

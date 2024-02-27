@@ -31,7 +31,7 @@
 	left: 0;
 	width: 100vw;
 	height: 100vh;	
-	z-index: 1050; /* Asegúrate que esté sobre otros elementos */
+	z-index: 1050; /* Asegrate que est sobre otros elementos */
   }
   
 
@@ -4045,7 +4045,7 @@ textarea.form-control-lg {
 
 	.dropdown-menu-container {
 		position: relative;
-		max-height: 240px; /* Ajusta según la altura deseada */
+		max-height: 240px; /* Ajusta segn la altura deseada */
 		overflow: hidden;
 	}
 
@@ -51126,13 +51126,13 @@ div#kt_content .card {
 	
 
 	.text-decoration1, .MuiButton-root.text-decoration1, .MuiMenuItem-root.text-decoration1 {
-		color: var(--neutros-negro, #1a1a1a); /* Asegúrate de que este sea el color que quieres */
+		color: var(--neutros-negro, #1a1a1a); /* Asegrate de que este sea el color que quieres */
 		font-family: 'FuenteTexto';
 		font-size: 14px; /* Ajusta esto para que coincida con tu diseño */
 		font-style: normal;
 		font-weight: 400;
-		line-height: 140%; /* Ajusta según tus necesidades */
-		padding: 6px 12px; /* Asegúrate de que esto sea lo que necesitas */
+		line-height: 140%; /* Ajusta segn tus necesidades */
+		padding: 6px 12px; /* Asegrate de que esto sea lo que necesitas */
 		white-space: nowrap;
 		letter-spacing: none;
 		text-transform: none;

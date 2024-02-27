@@ -23,7 +23,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: any, errorInfo: any) {
-    // También puedes registrar el error en un servicio de reporte de errores
+    // Tambin puedes registrar el error en un servicio de reporte de errores
     console.error("Capturado un error:", error, errorInfo);  
     this.setState({ errorInfo: errorInfo }); 
   }
@@ -36,7 +36,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       return (
         <>
-          <h1>Algo salió mal.</h1> 
+          <h1>Algo sali mal.</h1> 
           <details style={{ whiteSpace: 'pre-wrap' }}>
             {this.state.errorInfo && this.state.errorInfo.componentStack}
           </details>

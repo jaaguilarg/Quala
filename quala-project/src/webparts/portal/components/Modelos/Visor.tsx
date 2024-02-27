@@ -237,7 +237,7 @@ class Visor extends React.Component<IVisorProps, any> {
 													this.state.gestores && this.state.gestores.length > 0? //
 														<div className="d-flex my-4 me-3">
 															<Link to="/FormularioActualizacion">
-																<a className="sizebutton nonecolor btn btn-sm btn-outline btn-outline-primary btn-active-primary">Gestionar Modelo de Área</a>
+																<a className="sizebutton nonecolor btn btn-sm btn-outline btn-outline-primary btn-active-primary">Gestionar Modelo de Area</a>
 															</Link>
 
 														</div>

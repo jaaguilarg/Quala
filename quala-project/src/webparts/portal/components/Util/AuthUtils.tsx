@@ -63,15 +63,15 @@ export class AuthUtils {
     
     static async getAccessToken() {
         const tokenRequest = {
-            scopes: ["https://graph.microsoft.com/.default"], // Modifica según tus necesidades
-            skipCache: false, // Esto evita buscar en caché y obtiene un nuevo token
+            scopes: ["https://graph.microsoft.com/.default"], // Modifica segn tus necesidades
+            skipCache: false, // Esto evita buscar en cach y obtiene un nuevo token
         };
 
         try {
             const response = await this.cca.acquireTokenByClientCredential(tokenRequest);
             return response.accessToken;
         } catch (error) {
-            console.error('Error en la obtención del token:', error);
+            console.error('Error en la obtencin del token:', error);
             throw error;
         }
     }

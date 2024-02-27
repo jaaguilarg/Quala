@@ -327,7 +327,7 @@ class Portal extends React.Component<IPortalProps, IState> {
                   NombreArea: a.Nombre_x0020_Area.Label,
                 });
                          
-                // Aquí comenzamos a procesar las subáreas
+                // Aqu comenzamos a procesar las subreas
                 var SubAreaAux = itemsResultado.filter((x: { Nombre_x0020_Area: any }) => x.Nombre_x0020_Area.Label === a.Nombre_x0020_Area.Label);
                
                 var SubAreasuniq = _.uniq(SubAreaAux, (i: { Nombre_x0020_Sub_x0020_area: any }) => i.Nombre_x0020_Sub_x0020_area?.Label);                
@@ -632,7 +632,7 @@ class Portal extends React.Component<IPortalProps, IState> {
                     <div className="container-xxl d-flex flex-column flex-md-row align-items-center justify-content-between">
                       <div className="text-dark order-2 order-md-1">
                         <span className="text-muted fw-bold me-1">
-                          Versión {this.state.Version}
+                          Versin {this.state.Version}
                         </span>
                       </div>
                     </div>

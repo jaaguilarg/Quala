@@ -13,7 +13,7 @@ const rootReducer = combineReducers({
   userDetail: userDetailReducer,
   nivelAprobacion: nivelAprobacionReducer,
   terms: termsReducer
-  // otros reducers irían aquí
+  // otros reducers iran aqu
 });
 
 export default rootReducer;

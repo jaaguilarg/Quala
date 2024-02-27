@@ -97,13 +97,13 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
     public filterPlantas: string[] = [];
 
     public mapeoCampos = [
-        { jsonParam: "Direccion", todosTitle: "Dirección" },
-        { jsonParam: "Area", todosTitle: "Área" },
-        { jsonParam: "Subarea", todosTitle: "Subárea" },
+        { jsonParam: "Direccion", todosTitle: "Direccin" },
+        { jsonParam: "Area", todosTitle: "rea" },
+        { jsonParam: "Subarea", todosTitle: "Subrea" },
         { jsonParam: "Tipomecanismo", todosTitle: "Tipo de mecanismo" },
         { jsonParam: "Planta", todosTitle: "Planta" },
         { jsonParam: "Proceso", todosTitle: "Proceso" },
-        { jsonParam: "Categoria", todosTitle: "Categoría" },]
+        { jsonParam: "Categoria", todosTitle: "Categora" },]
        
     //#endregion
 
@@ -239,12 +239,12 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
 
     }
    
-    // Función que consulta el contexto del sitio y realiza la busqueda general
+    // Funcin que consulta el contexto del sitio y realiza la busqueda general
     public async loadContextSite() {             
         this.getDataFiltered()                 
     }
     
-    //Función para abrir modal de pilares
+    //Funcin para abrir modal de pilares
     openModalWithProps = (props:any) => {
         this.setState({
           showModal: true,
@@ -381,7 +381,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                 return mapeo.todosTitle;
             }
         } else {
-            return 'No se encontró correspondencia';
+            return 'No se encontr correspondencia';
         }
 
 
@@ -443,7 +443,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
             }
             else
             {
-                alert("La ficha no contiene información");
+                alert("La ficha no contiene informacin");
             }                                              
 
         } catch (error) {
@@ -451,7 +451,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
         }
     }
         
-    // Función que recibe el texto de búsqueda por medio de la URL
+    // Funcin que recibe el texto de bsqueda por medio de la URL
     public getQueryUrl(): void {
 
         this.pnp.getQueryStringParam('q', decodeURIComponent(window.location.href)).then(res => {
@@ -459,7 +459,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
         });
     }
 
-    // Función que limpia los filtros al cambiar de pestaña
+    // Funcin que limpia los filtros al cambiar de pestaña
     public onClickTab(): void {
 
         this.filtroPais = [];
@@ -491,7 +491,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
         // this.filtros = [];
     }
 
-    // Función que cambia las pestañas de la búsqueda
+    // Funcin que cambia las pestañas de la bsqueda
     public onTabChange(key: string): void {
 
         if (key == 'procesos') {
@@ -514,14 +514,14 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
         }
     }
 
-    // Función que envía el texto de búsqueda
+    // Funcin que enva el texto de bsqueda
     public onSubmitSearch(e: any) {
         e.preventDefault();
         this.onCleanPanel();
         this.getDataFiltered();
     }
 
-    // Función que asigna el texto de búsqueda
+    // Funcin que asigna el texto de bsqueda
     public onInputChange(e: any): void {                           
             this.setState({search: e.target.value});          
     }
@@ -554,7 +554,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
             });
     }*/
 
-    // Función que limpia el panel de previsualización de resultados
+    // Funcin que limpia el panel de previsualizacin de resultados
     public onCleanPanel() {
         this.setState({
             clean: false,
@@ -562,22 +562,22 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
         });
     }
   
-    // Función que establece los filtros resultados de la búsqueda
+    // Funcin que establece los filtros resultados de la bsqueda
     public onFiltersUpdate(items: any) {
 
         this.plantas = [];
         this.filterPlantas = [];                  
                 
-        let direcciones = this.props.terms.filter((x:any) => x.termSetName == "Dirección");
+        let direcciones = this.props.terms.filter((x:any) => x.termSetName == "Direccin");
         const conteoDirecciones = this.contarPropiedades(items, "Direccion");
         
-        let areas = this.props.terms.filter((x:any) => x.termSetName == "Área");
+        let areas = this.props.terms.filter((x:any) => x.termSetName == "rea");
         const conteoAreas = this.contarPropiedades(items, "Area");        
 
-        let subareas = this.props.terms.filter((x:any) => x.termSetName == "Subárea");
+        let subareas = this.props.terms.filter((x:any) => x.termSetName == "Subrea");
         const conteoSubarea = this.contarPropiedades(items, "Subarea");     
                 
-        let categorias = this.props.terms.filter((x:any) => x.termSetName == "Categoría");
+        let categorias = this.props.terms.filter((x:any) => x.termSetName == "Categora");
         const conteoCategoria = this.contarPropiedades(items, "Categoria");   
         
         let tipoMecanismos = this.props.terms.filter((x:any) => x.termSetName == "Tipo de mecanismo");
@@ -589,21 +589,21 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
         let procesos = this.props.terms.filter((x:any) => x.termSetName == "Proceso");
         const conteoProcesos = this.contarPropiedades(items, "Proceso");               
                 
-        this.todos[0] = { name: 'Dirección', items: direcciones.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoDirecciones[i.label] || 0})) };
-        this.todos[1] = { name: 'Área', items: areas.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoAreas[i.label] || 0 })).filter(item => item.Count > 0) };
-        this.todos[2] = { name: 'Subárea', items: subareas.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoSubarea[i.label] || 0})).filter(item => item.Count > 0) };                      
+        this.todos[0] = { name: 'Direccin', items: direcciones.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoDirecciones[i.label] || 0})) };
+        this.todos[1] = { name: 'rea', items: areas.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoAreas[i.label] || 0 })).filter(item => item.Count > 0) };
+        this.todos[2] = { name: 'Subrea', items: subareas.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoSubarea[i.label] || 0})).filter(item => item.Count > 0) };                      
         this.todos[3] = {name: 'Tipo de mecanismo',items: tipoMecanismos.map((i:any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoTipomecanismo[i.label] || 0 })).filter(item => item.Count > 0) };                        
         this.todos[4] = {name: 'Planta', items: plantas.map((i:any) => ({ Title: i.label,  Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoPlantas[i.label] || 0 })).filter(item => item.Count > 0) };                  
         this.todos[5] = { name: 'Proceso', items: procesos.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoProcesos[i.label] || 0})).filter(item => item.Count > 0) };
-        this.todos[6] = { name: 'Categoría', items: categorias.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoCategoria[i.label] || 0})).filter(item => item.Count > 0) };       
+        this.todos[6] = { name: 'Categora', items: categorias.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoCategoria[i.label] || 0})).filter(item => item.Count > 0) };       
 
-        this.procesos[0] = { name: 'Área', items: areas.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoAreas[i.label] || 0 })).filter(item => item.Count > 0) };
+        this.procesos[0] = { name: 'rea', items: areas.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoAreas[i.label] || 0 })).filter(item => item.Count > 0) };
         this.procesos[1] = { name: 'Proceso', items: procesos.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoProcesos[i.label] || 0})).filter(item => item.Count > 0) };
         this.procesos[2] = {name: 'Planta', items: plantas.map((i:any) => ({ Title: i.label,  Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoPlantas[i.label] || 0 })).filter(item => item.Count > 0) };                  
         this.procesos[3] = { name: 'Tipo de mecanismo', items: tipoMecanismos.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i}"`) > -1? true: false, Count: conteoTipomecanismo[i.label] || 0})).filter(item => item.Count > 0) };
-        this.procesos[4] = { name: 'Dirección', items: direcciones.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true:  false, Count: conteoDirecciones[i.label] || 0})) };
-        this.procesos[5] = { name: 'Subárea', items: subareas.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoSubarea[i.label] || 0})).filter(item => item.Count > 0) };
-        this.procesos[6] = { name: 'Categoría', items: categorias.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoCategoria[i.label] || 0})).filter(item => item.Count > 0) };   
+        this.procesos[4] = { name: 'Direccin', items: direcciones.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true:  false, Count: conteoDirecciones[i.label] || 0})) };
+        this.procesos[5] = { name: 'Subrea', items: subareas.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoSubarea[i.label] || 0})).filter(item => item.Count > 0) };
+        this.procesos[6] = { name: 'Categora', items: categorias.map((i: any) => ({ Title: i.label, Check: this.filtroItem.indexOf(`"${i.label}"`) > -1? true: false, Count: conteoCategoria[i.label] || 0})).filter(item => item.Count > 0) };   
 
         if (this.plantas.length > 1) {
             this.filterPlantas.push(`(RefinableString06:or(${this.plantas}))`);
@@ -621,15 +621,15 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
 
     }
 
-    // Función que asigna los filtros y crea la query para enviarla al servicio de búsqueda
+    // Funcin que asigna los filtros y crea la query para enviarla al servicio de bsqueda
     public setFilter(group: string, label: string, checked: boolean, index: number): void {
       
         if(typeof label === "string"){
             label.replace(" ","+");
         }
         
-        // Asignación de filtro País
-        if (group == 'País') {
+        // Asignacin de filtro Pas
+        if (group == 'Pas') {
             if (checked == false) {
                 this.filtroPais.push(label);
                 this.queryPais = this.filtroPais.length > 1 ? `(RefinableString00:or(${this.filtroPais.toString()}))` : `(RefinableString00:equals(${this.filtroPais.toString()}))`;                                                                          
@@ -639,8 +639,8 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
             }
         }
 
-        // Asignación de filtro Dirección
-        if (group == 'Dirección') {                     
+        // Asignacin de filtro Direccin
+        if (group == 'Direccin') {                     
             if (checked == false) {                
                 this.filtroDireccion.push(`"${label}"`);
                 this.queryDireccion = this.filtroDireccion.length > 1 ? `(RefinableString01:or(${this.filtroDireccion.toString()}))` : `(RefinableString01:equals(${this.filtroDireccion.toString()}))`;
@@ -651,8 +651,8 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
         }
         
 
-        // Asignación de filtro Área
-        if (group == 'Área') {         
+        // Asignacin de filtro rea
+        if (group == 'rea') {         
             if (checked == false) {
                 this.filtroArea.push(`"${label}"`);
                 this.queryArea = this.filtroArea.length > 1 ? `(RefinableString02:or(${this.filtroArea.toString()}))` : `(RefinableString02:equals(${this.filtroArea.toString()}))`;
@@ -662,8 +662,8 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
             }
         }
 
-        // Asignación de filtro Suárea
-        if (group == 'Subárea') {
+        // Asignacin de filtro Surea
+        if (group == 'Subrea') {
 
             if (checked == false) {
                 this.filtroSubArea.push(`"${label}"`);
@@ -674,7 +674,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
             }
         }
 
-        // Asignación de filtro Tipo de mecanismo
+        // Asignacin de filtro Tipo de mecanismo
         if (group == 'Tipo de mecanismo') {
 
             if (checked == false) {
@@ -687,8 +687,8 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
             }
         }
 
-        // Asignación de filtro Categoría
-        if (group == 'Categoría') {
+        // Asignacin de filtro Categora
+        if (group == 'Categora') {
 
             if (checked == false) {
                 this.filtroCategoria.push(`"${label}"`);
@@ -700,7 +700,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
             }
         }
 
-        // Asignación de filtro Planta
+        // Asignacin de filtro Planta
         if (group == 'Planta') {
 
             if (checked == false) {
@@ -715,7 +715,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
 
         // RefinableString07:Seguridad
 
-        // Asignación de filtro Proceso
+        // Asignacin de filtro Proceso
         if (group == 'Proceso') {
 
             if (checked == false) {
@@ -806,7 +806,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
         });                              
     }
     
-    // Función que realiza la búsqueda con los filtros asignados, y retorna los resultados
+    // Funcin que realiza la bsqueda con los filtros asignados, y retorna los resultados
     public getDataFiltered(){
 
         this.filtros = [];
@@ -844,7 +844,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
         } 
     }
     
-    // Función que renderiza el componente
+    // Funcin que renderiza el componente
     public render(): React.ReactElement<IResultadosBuscadorProps> {
         
         {if(this.state.isLoading)
@@ -1014,7 +1014,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
                                             <div
                                                 className="text-hover-primary text-gray-700"
                                                 style={{ textAlign: "center", cursor: "pointer", marginBottom: "10px" }}
-                                                onClick={(e) => this.onSubmitSearch(e)}>Ver más resultados
+                                                onClick={(e) => this.onSubmitSearch(e)}>Ver ms resultados
                                             </div>
                                         </div>
                                         :
@@ -1296,7 +1296,7 @@ class ResultadosBuscador extends React.Component<IResultadosBuscadorProps, any> 
         );
     }
 
-    // Función para realizar la paginación
+    // Funcin para realizar la paginacin
     private _onPageUpdate = async (page?: number) => {       
         const currentPge = (page) ? page : this.state.currentPage;
         let startItem = ((currentPge - 1) * this.state.pageSize);

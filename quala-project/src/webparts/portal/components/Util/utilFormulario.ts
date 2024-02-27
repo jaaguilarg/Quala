@@ -17,21 +17,21 @@ export class utilFormulario{
         Revisor: "Revisor",
         Publicador: "Publicador",
         Aprobador_x0020_Revisa: "Aprobador Revisa",
-        Gerente_x0020_de_x0020_Area: "Gerente de Área",
+        Gerente_x0020_de_x0020_Area: "Gerente de rea",
         AuditorId: "Auditor",
         Jefe_x0020_o_x0020_Gerente_x0020: "Jefe o Gerente",
         DirectorGH: "Director GH",
-        Director_x0020_area: "Director de Área",
+        Director_x0020_area: "Director de rea",
         Director_x0020_General: "Director General",
         Presidente_x0020_Ejecutivo: "Presidente Ejecutivo",
-        Lider_x0020_de_x0020_modelo_x002: "Líder de Modelo",        
+        Lider_x0020_de_x0020_modelo_x002: "Lder de Modelo",        
     };
     
 
     
 
 
-    // Consulta los usuarios que aprueban por dirección y área
+    // Consulta los usuarios que aprueban por direccin y rea
     public consultarMatrizApro(paisId: number, tipomecanismo: string, niveles: any) {
         let listadeUsuarios: any[] = [];
 

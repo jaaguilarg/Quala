@@ -80,7 +80,7 @@ export default class FilterProcesos extends React.Component<IFilterProcesosProps
                                 ))}</>) : null}
                             
                             <Button onClick={toggleDiv}>
-                                {this.state.showDiv ? "Ver Menos" : "Ver más"}
+                                {this.state.showDiv ? "Ver Menos" : "Ver ms"}
                             </Button> </>) : null }
                 </FormGroup>
             </Item>

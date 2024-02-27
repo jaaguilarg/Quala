@@ -1131,7 +1131,7 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
                                       </div>
                                       <div className="row mb-5 contenform">
                                         <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
-                                          <label className="form-label">País</label>
+                                          <label className="form-label">Pas</label>
                                           <input type="text" className="form-control" name="input2" placeholder="." disabled
                                             value={this.props.userDetail.pais} />
                                         </div>                                                                                                                   
@@ -1258,7 +1258,7 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
                                                 onChange={(e) => { this.setState({ seguridad: e.target.value }) }} />
                                             </span>
                                             <label className="form-check-label pe-10" htmlFor="flexRadioDefault">
-                                              Público
+                                              Pblico
                                             </label>
                                             <span className="form-check">
                                               <input
@@ -1332,7 +1332,7 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
                                               }}
                                             />
                                             <span className="form-check-label mx-15">
-                                              Requiere revisión de auditoría
+                                              Requiere revisin de auditora
                                             </span>
 
                                           </label>
@@ -1351,7 +1351,7 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
                                               onChange={(e) => { this.setState({ AplicaPlanta: !this.state.AplicaPlanta }) }} />
 
                                             <span className="form-check-label mx-15">
-                                              Aplica a planta de producción
+                                              Aplica a planta de produccin
                                             </span>
 
 
@@ -1438,8 +1438,8 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
                                           </span>
                                           <div className="d-flex flex-column">
                                             <span>Con esta solicitud usted va extender la vigencia de los documentos seleccionados por
-                                              <strong>  5 años </strong> más, asegurando que el documento actual está vigente y
-                                              corresponde a la forma de operar actual del área.</span>
+                                              <strong>  5 años </strong> ms, asegurando que el documento actual est vigente y
+                                              corresponde a la forma de operar actual del rea.</span>
                                           </div>
                                         </div>
                                       </div>
@@ -1455,7 +1455,7 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
                                       </div>
                                     </div>
                                     <div>
-                                      <h4 className="mg-a">Aprobadores del área</h4>
+                                      <h4 className="mg-a">Aprobadores del rea</h4>
                                     </div>
                                     <div className="row mb-5 contenform">
                                       <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6">
@@ -1547,13 +1547,13 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
                                     </div>
                                     <div>
                                       <h4 className="mg-a">
-                                        Aprobadores de áreas involucradas
+                                        Aprobadores de reas involucradas
                                       </h4>
                                     </div>
                                     <div className="row mb-5 contenform">
                                       <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 mt-6">
                                         <small className="text-gray-600 fs-7">
-                                          Seleccione las áreas que tienen
+                                          Seleccione las reas que tienen
                                           responsabilidad en el documento
                                         </small>
                                         <br />
@@ -1577,7 +1577,7 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
                                           (e:any, index:any) => (
                                             <div className="row">
                                               <div className="col-lg-4 col-md-4 col-xl-4 marginBottom">
-                                                <label>Dirección {index + 1} </label>
+                                                <label>Direccin {index + 1} </label>
                                                 <select
                                                   onChange={(event) =>
                                                     this.getAprobadoresPorArea(
@@ -1607,7 +1607,7 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
                                                 this.state['AreasDireccion' + index]
                                                   .length > 0 ? (
                                                 <div className="col-lg-4 col-md-4 col-xl-4 marginBottom">
-                                                  <label>Área {index + 1} </label>
+                                                  <label>Area {index + 1} </label>
                                                   <select
                                                     onChange={(eventA) =>
                                                       this.getAprobadoresArea(
@@ -1750,7 +1750,7 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
 
                                       {this.state.cAprobadores && this.state.cAprobadores.length > 0
                                         ? this.state.cAprobadores.map((p:any, i:any) =>
-                                          p.Cargo !== 'Auditor' && p.Cargo !== 'Líder GDC' ? (
+                                          p.Cargo !== 'Auditor' && p.Cargo !== 'Lder GDC' ? (
                                             <div className="col-lg-6 col-md-6 col-xl-6 col-xxl-6 marginBottom">
                                               <label className="form-label">
                                                 {p.Cargo}
@@ -1921,7 +1921,7 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
                                             <path d="M6.354 5.5H4a3 3 0 0 0 0 6h3a3 3 0 0 0 2.83-4H9c-.086 0-.17.01-.25.031A2 2 0 0 1 7 10.5H4a2 2 0 1 1 0-4h1.535c.218-.376.495-.714.82-1z" />
                                             <path d="M9 5.5a3 3 0 0 0-2.83 4h1.098A2 2 0 0 1 9 6.5h3a2 2 0 1 1 0 4h-1.535a4.02 4.02 0 0 1-.82 1H12a3 3 0 1 0 0-6H9z" />
                                           </svg>
-                                          Consultar matriz de aprobación de gestión
+                                          Consultar matriz de aprobacin de gestin
                                           del conocimiento
                                         </a>
                                       </div>
@@ -1990,10 +1990,10 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
 
 
                                               <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12 marginBottom">
-                                                <label className="form-label required">Descripción:</label>
+                                                <label className="form-label required">Descripcin:</label>
 
 
-                                                <textarea maxLength={300} value={this.state.DescripcionMotivo} onChange={(e) => { (this.longitudcadena(e.target.value), this.setState({ DescripcionMotivo: e.target.value })) }} className="form-control" name="input2" placeholder="Ingrese la Descripción"></textarea>
+                                                <textarea maxLength={300} value={this.state.DescripcionMotivo} onChange={(e) => { (this.longitudcadena(e.target.value), this.setState({ DescripcionMotivo: e.target.value })) }} className="form-control" name="input2" placeholder="Ingrese la Descripcin"></textarea>
                                               </div>
                                           }
                                           <p id="Contadordesextend">{this.state.CantidadCaracteres}/300</p>
@@ -2046,7 +2046,7 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
                                       <div className="row mb-5">
                                         <div className="card-title flex-column p-4 mb-5">
                                           <h2 className="text-primary fs-1">
-                                            Solicitud enviada con éxito.
+                                            Solicitud enviada con xito.
                                           </h2>
                                         </div>
                                         <div className="col-lg-12 col-md-12 col-xl-12 col-xxl-12">
@@ -2055,7 +2055,7 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
                                           </figure>
                                         </div>
                                         <h3 className="text-gray-600 fs-5">
-                                          Puedes consultar el estado de tu solicitud en  <a href={this.state.linkFinal} target="_blank">está página</a>
+                                          Puedes consultar el estado de tu solicitud en  <a href={this.state.linkFinal} target="_blank">est pgina</a>
                                         </h3>
 
                                         <small className="text-gray-600 fs-5">
@@ -2127,7 +2127,7 @@ class ExtenderVigencia extends React.Component<IExtenderVigenciaProps, any>{
                                   : null}
 
                               </div>
-                              {/* comentario de Prueba para sincronización */}
+                              {/* comentario de Prueba para sincronizacin */}
                             </div>
                           </div>
                         </div>

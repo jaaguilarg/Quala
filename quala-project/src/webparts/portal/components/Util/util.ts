@@ -666,16 +666,16 @@ export class PNP{
 
   public async getUsersByCountry(countryName: string): Promise<IUserDetails[]> {
   
-    // Primero, obtenemos el ID del país basado en el nombre del país
+    // Primero, obtenemos el ID del pas basado en el nombre del pas
     const countryItems = await this.rootWeb.web.lists.getByTitle('Paises').items.filter(`Nombre_x0020_Pais eq '${countryName}'`).select('Id, Sigla')();
     if (countryItems.length === 0) {
-      throw new Error(`No se encontró el país con nombre ${countryName}`);
+      throw new Error(`No se encontr el pas con nombre ${countryName}`);
     }
     
     const countryId = countryItems[0].Id;
     const countrySigla = countryItems[0].Sigla;
   
-    // Ahora, recuperamos todos los usuarios con ese ID de país
+    // Ahora, recuperamos todos los usuarios con ese ID de pas
     const sViewlXml = `<View>
                         <ViewFields>
                           <FieldRef Name="Pais"/>                       
@@ -981,11 +981,11 @@ export class PNP{
     try {
         const accessToken = AuthUtils.obtenerAccessTokenAzureFunction();
         let query = "";
-        const pageSize = 50; // Tamaño de página
+        const pageSize = 50; // Tamaño de pgina
         let startRow = 0; // Inicio de fila
         let allPrimaryResults:any[] = []; // Para almacenar todos los resultados primarios
         let totalRows = 0; // Total de filas
-        let moreResults = true; // Bandera para continuar la paginación
+        let moreResults = true; // Bandera para continuar la paginacin
 
         const ext = [
             'IsContainer:equals("false")',
@@ -1031,7 +1031,7 @@ export class PNP{
 
                 startRow += results.PrimarySearchResults.length;
             } else {
-                moreResults = false; // No hay más resultados
+                moreResults = false; // No hay ms resultados
             }
         }
 
@@ -1498,8 +1498,8 @@ export class PNP{
             
           const termsWithGroupAndSetName = terms.map(term => ({
             label: term.labels[0].name,
-            groupName: grupo.name,  // Agregar el nombre del grupo aquí
-            termSetName: termSet.localizedNames[0].name // Agregar el nombre del term set aquí
+            groupName: grupo.name,  // Agregar el nombre del grupo aqu
+            termSetName: termSet.localizedNames[0].name // Agregar el nombre del term set aqu
           }));
   
           todosLosTerminos = [...todosLosTerminos, ...termsWithGroupAndSetName];
@@ -1509,7 +1509,7 @@ export class PNP{
       return todosLosTerminos;    
   
     } catch (error) {
-      console.error("Error al obtener los términos:", error);
+      console.error("Error al obtener los trminos:", error);
     }
   }
   
